@@ -25,34 +25,108 @@
  *    in any of this code.
  */
 package com.holub.database.jdbc.adapters;
-import java.sql.*;
+
+import java.sql.SQLException;
 
 /***
  * @include /etc/license.txt
  */
 
-public class ResultSetMetaDataAdapter implements java.sql.ResultSetMetaData
-{
-public ResultSetMetaDataAdapter(){}
-public String getCatalogName(int column) throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getCatalogName(int column) not supported");}
-public String getColumnClassName(int column) throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnClassName(int column) not supported");}
-public int getColumnCount()throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnCount() not supported");}
-public int getColumnDisplaySize(int column)throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnDisplaySize(int column) not supported");}
-public String getColumnLabel(int column)throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnLabel(int column) not supported");}
-public String getColumnName(int column)throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnName(int column) not supported");}
-public int getColumnType(int column)throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnType(int column) not supported");}
-public String getColumnTypeName(int column)throws java.sql.SQLException{throw new SQLException("ResultSetMetaData.getColumnTypeName(int column) not supported");}
-public int getPrecision(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.getPrecision(int column) not supported");}
-public int getScale(int column) throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.getScale(int column) not supported");}
-public String getSchemaName(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.getSchemaName(int column) not supported");}
-public String getTableName(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.getTableName(int column) not supported");}
-public boolean isAutoIncrement(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isAutoIncrement(int column) not supported");}
-public boolean isCaseSensitive(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isCaseSensitive(int column) not supported");}
-public boolean isCurrency(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isCurrency(int column) not supported");}
-public boolean isDefinitelyWritable(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isDefinitelyWritable(int column) not supported");}
-public int isNullable(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isNullable(int column) not supported");}
-public boolean isReadOnly(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isReadOnly(int column) not supported");}
-public boolean isSearchable(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isSearchable(int column) not supported");}
-public boolean isSigned(int column)throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isSigned(int column) not supported");}
-public boolean isWritable(int column) throws java.sql.SQLException{throw new java.sql.SQLException("ResultSetMetaData.isWritable(int column) not supported");}
+public class ResultSetMetaDataAdapter implements java.sql.ResultSetMetaData {
+    public ResultSetMetaDataAdapter() {
+    }
+
+    public String getCatalogName(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getCatalogName(int column) not supported");
+    }
+
+    public String getColumnClassName(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnClassName(int column) not supported");
+    }
+
+    public int getColumnCount() throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnCount() not supported");
+    }
+
+    public int getColumnDisplaySize(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnDisplaySize(int column) not supported");
+    }
+
+    public String getColumnLabel(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnLabel(int column) not supported");
+    }
+
+    public String getColumnName(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnName(int column) not supported");
+    }
+
+    public int getColumnType(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnType(int column) not supported");
+    }
+
+    public String getColumnTypeName(int column) throws java.sql.SQLException {
+        throw new SQLException("ResultSetMetaData.getColumnTypeName(int column) not supported");
+    }
+
+    public int getPrecision(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.getPrecision(int column) not supported");
+    }
+
+    public int getScale(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.getScale(int column) not supported");
+    }
+
+    public String getSchemaName(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.getSchemaName(int column) not supported");
+    }
+
+    public String getTableName(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.getTableName(int column) not supported");
+    }
+
+    public boolean isAutoIncrement(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isAutoIncrement(int column) not supported");
+    }
+
+    public boolean isCaseSensitive(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isCaseSensitive(int column) not supported");
+    }
+
+    public boolean isCurrency(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isCurrency(int column) not supported");
+    }
+
+    public boolean isDefinitelyWritable(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isDefinitelyWritable(int column) not supported");
+    }
+
+    public int isNullable(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isNullable(int column) not supported");
+    }
+
+    public boolean isReadOnly(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isReadOnly(int column) not supported");
+    }
+
+    public boolean isSearchable(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isSearchable(int column) not supported");
+    }
+
+    public boolean isSigned(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isSigned(int column) not supported");
+    }
+
+    public boolean isWritable(int column) throws java.sql.SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isWritable(int column) not supported");
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.unwrap(Class<T> iface) not supported");
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        throw new java.sql.SQLException("ResultSetMetaData.isWrapperFor(Class<?> iface) not supported");
+    }
 }
