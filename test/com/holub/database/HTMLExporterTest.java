@@ -23,10 +23,10 @@ class HTMLExporterTest {
 
     @Test
     void startTable() {
-        String resultString = "<!DOCTYPE html>\n" +
-                "<html>\n" +
-                "<head></head>\n" +
-                "<body>\n";
+        String resultString = "<!DOCTYPE html>" +
+                "<html>" +
+                "<head></head>" +
+                "<body>";
         try {
             exporter.startTable();
             Assertions.assertEquals(resultString, writer.getOutput());
@@ -48,16 +48,16 @@ class HTMLExporterTest {
     @Test
     @DisplayName("tableName is not Null")
     void storeMetadataWhenTableNameIsNotNull() {
-        String resultString = "<h1>SampleTable</h1>\n" +
-                "<table>\n" +
-                "<thead>\n" +
-                "<tr>\n" +
-                "<th>A</th>\n" +
-                "<th>B</th>\n" +
-                "<th>C</th>\n" +
-                "</tr>\n" +
-                "</thead>\n" +
-                "<tbody>\n";
+        String resultString = "<h1>SampleTable</h1>" +
+                "<table>" +
+                "<thead>" +
+                "<tr>" +
+                "<th>A</th>" +
+                "<th>B</th>" +
+                "<th>C</th>" +
+                "</tr>" +
+                "</thead>" +
+                "<tbody>";
         try {
             List columnNames = new ArrayList();
             columnNames.add("A");
@@ -71,11 +71,11 @@ class HTMLExporterTest {
 
     @Test
     void storeRow() {
-        String resultString = "<tr>\n" +
-                "<td>DataA</td>\n" +
-                "<td>DataB</td>\n" +
-                "<td>DataC</td>\n" +
-                "</tr>\n";
+        String resultString = "<tr>" +
+                "<td>DataA</td>" +
+                "<td>DataB</td>" +
+                "<td>DataC</td>" +
+                "</tr>";
         try {
             List columnNames = new ArrayList();
             columnNames.add("DataA");
@@ -89,10 +89,10 @@ class HTMLExporterTest {
 
     @Test
     void endTable() {
-        String resultString = "</tbody>\n" +
-                "</table>\n" +
-                "</body>\n" +
-                "</html>\n";
+        String resultString = "</tbody>" +
+                "</table>" +
+                "</body>" +
+                "</html>";
         try {
             exporter.endTable();
             Assertions.assertEquals(resultString, writer.getOutput());
@@ -108,49 +108,49 @@ class HTMLExporterTest {
 
         }
 
-        String resultString = "<!DOCTYPE html>\n" +
-                "<html>\n" +
-                "<head></head>\n" +
-                "<body>\n" +
-                "<h1>SampleTable</h1>\n" +
-                "<table>\n" +
-                "<thead>\n" +
-                "<tr>\n" +
-                "<th>A</th>\n" +
-                "<th>B</th>\n" +
-                "<th>C</th>\n" +
-                "</tr>\n" +
-                "</thead>\n" +
-                "<tbody>\n" +
-                "<tr>\n" +
-                "<td>Data1A</td>\n" +
-                "<td>Data1B</td>\n" +
-                "<td>Data1C</td>\n" +
-                "</tr>\n" +
-                "<tr>\n" +
-                "<td>Data2A</td>\n" +
-                "<td>Data2B</td>\n" +
-                "<td>Data2C</td>\n" +
-                "</tr>\n" +
-                "<tr>\n" +
-                "<td>Data3A</td>\n" +
-                "<td>Data3B</td>\n" +
-                "<td>Data3C</td>\n" +
-                "</tr>\n" +
-                "<tr>\n" +
-                "<td>Data4A</td>\n" +
-                "<td>Data4B</td>\n" +
-                "<td>Data4C</td>\n" +
-                "</tr>\n" +
-                "<tr>\n" +
-                "<td>Data5A</td>\n" +
-                "<td>Data5B</td>\n" +
-                "<td>Data5C</td>\n" +
-                "</tr>\n" +
-                "</tbody>\n" +
-                "</table>\n" +
-                "</body>\n" +
-                "</html>\n";
+        String resultString = "<!DOCTYPE html>" +
+                "<html>" +
+                "<head></head>" +
+                "<body>" +
+                "<h1>SampleTable</h1>" +
+                "<table>" +
+                "<thead>" +
+                "<tr>" +
+                "<th>A</th>" +
+                "<th>B</th>" +
+                "<th>C</th>" +
+                "</tr>" +
+                "</thead>" +
+                "<tbody>" +
+                "<tr>" +
+                "<td>Data1A</td>" +
+                "<td>Data1B</td>" +
+                "<td>Data1C</td>" +
+                "</tr>" +
+                "<tr>" +
+                "<td>Data2A</td>" +
+                "<td>Data2B</td>" +
+                "<td>Data2C</td>" +
+                "</tr>" +
+                "<tr>" +
+                "<td>Data3A</td>" +
+                "<td>Data3B</td>" +
+                "<td>Data3C</td>" +
+                "</tr>" +
+                "<tr>" +
+                "<td>Data4A</td>" +
+                "<td>Data4B</td>" +
+                "<td>Data4C</td>" +
+                "</tr>" +
+                "<tr>" +
+                "<td>Data5A</td>" +
+                "<td>Data5B</td>" +
+                "<td>Data5C</td>" +
+                "</tr>" +
+                "</tbody>" +
+                "</table>" +
+                "</body>" +
+                "</html>";
         try {
             WriterMock w = new WriterMock();
             tb.export(new HTMLExporter(w));
