@@ -257,7 +257,7 @@ public class Console {
         }
 
         try {
-            connection = DriverManager.getConnection("file:/" + databaseName, "harpo", "swordfish");
+            connection = DriverManager.getConnection("file://" + databaseName, "harpo", "swordfish");
             statement = connection.createStatement();
         } catch (SQLException e) {
             displayException("Couldn't open database: " + databaseName, e);
