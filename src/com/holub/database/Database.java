@@ -432,6 +432,7 @@ public final class Database {    /* The directory that represents the database.
             USE = tokens.create("'USE"),
             VALUES = tokens.create("'VALUES"),
             WHERE = tokens.create("'WHERE"),
+            DISTINCT = tokens.create("'DISTINCT"),
 
     WORK = tokens.create("WORK|TRAN(SACTION)?"),
             ADDITIVE = tokens.create("\\+|-"),
@@ -843,7 +844,15 @@ public final class Database {    /* The directory that represents the database.
             in.required(WHERE);
             affectedRows = doDelete(tableName, expr());
         } else if (in.matchAdvance(SELECT) != null) {
+
+            Boolean isDistinctQuery = false;
+
+            if (in.matchAdvance(DISTINCT) != null) {
+                isDistinctQuery = true;
+            }
+
             List columns = idList();
+
 
             String into = null;
             if (in.matchAdvance(INTO) != null)
@@ -856,6 +865,27 @@ public final class Database {    /* The directory that represents the database.
                     ? null : expr();
             Table result = doSelect(columns, into,
                     requestedTableNames, where);
+
+            if (isDistinctQuery) {
+                HashSet<String> checkData = new HashSet<>();
+
+                return result.select(new Selector.Adapter() {
+                    @Override
+                    public boolean approve(Cursor[] rows) {
+                        Iterator it = rows[0].columns();
+                        StringBuilder sb = new StringBuilder();
+                        while (it.hasNext()) {
+                            sb.append(it.next().toString());
+                        }
+                        if (checkData.contains(sb.toString())) {
+                            return false;
+                        }
+                        checkData.add(sb.toString());
+                        return true;
+                    }
+                });
+            }
+
             return result;
         } else {
             error("Expected insert, create, drop, use, "
