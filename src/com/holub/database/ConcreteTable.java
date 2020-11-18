@@ -478,6 +478,21 @@ import java.util.*;
         // Create places to hold the result of the join and to hold
         // iterators for each table involved in the join.
 
+        // Join 연산을 SELECT *와 함께 사용하는 경우
+        // Parser는 requestedColumn을 null로 전달한다
+        // 이 때 Table의 생성자에 columnNames이 null로 전달되는 경우 오류가 발생하므로
+        // 전달받은 모든 테이블의 columnName을 가지고 새로운 requestColumns를 만든다
+        if (requestedColumns == null) {
+            Set<String> allColumnSet = new LinkedHashSet<String>();
+            for (int i = 0; i < allTables.length; i++) {
+                Cursor c = allTables[i].rows();
+                for (int j = 0; j < c.columnCount(); j++) {
+                    allColumnSet.add(c.columnName(j));
+                }
+            }
+            requestedColumns = allColumnSet.toArray(new String[0]);
+        }
+
         Table resultTable = new ConcreteTable(null, requestedColumns);
         Cursor[] envelope = new Cursor[allTables.length];
 
