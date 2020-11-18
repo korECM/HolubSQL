@@ -827,15 +827,18 @@ public class ResultSetAdapter implements java.sql.ResultSet {
     }
 
     public void updateAsciiStream(String colIndex, java.io.InputStream in, int s) throws SQLException {
-        throw new SQLException("ResultSet.updateAsciiStream(String colIndex, java.io.InputStream in, int s) unsupported");
+        throw new SQLException("ResultSet.updateAsciiStream(String colIndex, java.io.InputStream in, int s) " +
+                "unsupported");
     }
 
     public void updateBinaryStream(String colIndex, java.io.InputStream in, int s) throws SQLException {
-        throw new SQLException("ResultSet.updateBinaryStream(String colIndex, java.io.InputStream in, int s) unsupported");
+        throw new SQLException("ResultSet.updateBinaryStream(String colIndex, java.io.InputStream in, int s) " +
+                "unsupported");
     }
 
     public void updateCharacterStream(String colIndex, java.io.Reader in, int s) throws SQLException {
-        throw new SQLException("ResultSet.updateCharacterStream(String colIndex, java.io.Reader in, int s) unsupported");
+        throw new SQLException("ResultSet.updateCharacterStream(String colIndex, java.io.Reader in, int s) " +
+                "unsupported");
     }
 
     public void updateObject(String colIndex, Object obj) throws SQLException {

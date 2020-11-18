@@ -26,44 +26,42 @@
  */
 package com.holub.database.jdbc;
 
-import java.sql.*;
-import java.io.*;
+import com.holub.database.Database;
+import com.holub.database.Table;
+import com.holub.database.jdbc.adapters.StatementAdapter;
 
-import com.holub.database.*;
-import com.holub.database.jdbc.adapters.*;
- 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 /***
  * @include /etc/license.txt
  */
 
-public class JDBCStatement extends StatementAdapter
-{	private Database database;
+public class JDBCStatement extends StatementAdapter {
+    private Database database;
 
-	public JDBCStatement(Database database)
-	{	this.database = database;
-	}
-  
-	public int executeUpdate(String sqlString) throws SQLException
-	{	try
-		{	database.execute( sqlString );
-			return database.affectedRows();
-		}
-		catch( Exception e )
-		{	throw new SQLException( e.getMessage() );
-		}
-	}
-	
-	public ResultSet executeQuery(String sqlQuery) throws SQLException
-	{	try
-		{	Table result = database.execute( sqlQuery );
-			return new JDBCResultSet( result.rows() );
-		}
-		catch( Exception e )
-		{	throw new SQLException( e.getMessage() );
-		}
-	}
+    public JDBCStatement(Database database) {
+        this.database = database;
+    }
 
-	public void close() throws SQLException
-	{	// does nothing.
-	}
+    public int executeUpdate(String sqlString) throws SQLException {
+        try {
+            database.execute(sqlString);
+            return database.affectedRows();
+        } catch (Exception e) {
+            throw new SQLException(e.getMessage());
+        }
+    }
+
+    public ResultSet executeQuery(String sqlQuery) throws SQLException {
+        try {
+            Table result = database.execute(sqlQuery);
+            return new JDBCResultSet(result.rows());
+        } catch (Exception e) {
+            throw new SQLException(e.getMessage());
+        }
+    }
+
+    public void close() throws SQLException {    // does nothing.
+    }
 }

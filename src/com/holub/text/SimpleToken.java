@@ -26,34 +26,38 @@
  */
 package com.holub.text;
 
-import java.util.*;
-import java.util.regex.*;
-
-/** Matches a simple symbol that doesn't have to be on a "word"
- *  boundary; punctuation, for example. SimpleToken
- *  is very efficient, but does not recognize characters in
- *  a case-insensitive way, as does {@link WordToken} and
- *  {@link RegexToken}.
+/**
+ * Matches a simple symbol that doesn't have to be on a "word"
+ * boundary; punctuation, for example. SimpleToken
+ * is very efficient, but does not recognize characters in
+ * a case-insensitive way, as does {@link WordToken} and
+ * {@link RegexToken}.
  *
- *	@include /etc/license.txt
+ * @include /etc/license.txt
  */
 
-public class SimpleToken implements Token
-{	
-	private final  String 	pattern;
+public class SimpleToken implements Token {
+    private final String pattern;
 
-	/** Create a token.
-	 *  @param pattern a string that defines a literal-match lexeme.
-	 */
+    /**
+     * Create a token.
+     *
+     * @param pattern a string that defines a literal-match lexeme.
+     */
 
-	public SimpleToken( String pattern )
-	{	this.pattern = pattern.toLowerCase();
-	}
+    public SimpleToken(String pattern) {
+        this.pattern = pattern.toLowerCase();
+    }
 
-	public boolean match( String input, int offset )
-	{	return input.toLowerCase().startsWith( pattern, offset );
-	}
+    public boolean match(String input, int offset) {
+        return input.toLowerCase().startsWith(pattern, offset);
+    }
 
-	public String lexeme()  { return pattern; }
-	public String toString(){ return pattern; }
+    public String lexeme() {
+        return pattern;
+    }
+
+    public String toString() {
+        return pattern;
+    }
 }

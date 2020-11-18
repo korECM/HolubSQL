@@ -26,7 +26,8 @@
  */
 package com.holub.tools;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /*** A simple implementation of java.util.Iterator that enumerates
  *   over arrays. You can use this class to pass arrays to
@@ -35,42 +36,45 @@ import java.util.*;
  *   makes an array appear to implement the <code>Iterator</code>
  *   interface.)
  *
- *	@include /etc/license.txt
+ *    @include /etc/license.txt
  */
 
-public final class ArrayIterator implements Iterator
-{
-	private int	 			position = 0;
-	private final Object[]	items;
+public final class ArrayIterator implements Iterator {
+    private int position = 0;
+    private final Object[] items;
 
-	/**
-	 * Create and <code>ArrayIterator</code>.
-	 * @param items the array whose elements will be returned,
-	 * 	in turn, by each {@link #next} call.
-	 */
-	public ArrayIterator(Object[] items){ this.items = items; }
+    /**
+     * Create and <code>ArrayIterator</code>.
+     *
+     * @param items the array whose elements will be returned,
+     *              in turn, by each {@link #next} call.
+     */
+    public ArrayIterator(Object[] items) {
+        this.items = items;
+    }
 
-	public boolean hasNext()
-	{	return ( position < items.length );
-	}
+    public boolean hasNext() {
+        return (position < items.length);
+    }
 
-	public Object next()
-	{	if( position >= items.length )
-			throw new NoSuchElementException();
-		return items[ position++ ];
-	}
+    public Object next() {
+        if (position >= items.length)
+            throw new NoSuchElementException();
+        return items[position++];
+    }
 
-	public void remove()
-	{	throw new UnsupportedOperationException(
-								"ArrayIterator.remove()");
-	}
+    public void remove() {
+        throw new UnsupportedOperationException(
+                "ArrayIterator.remove()");
+    }
 
-	/** Not part of the Iterator interface, returns the data
-	 *  set in array form. A clone of the wrapped array
-	 *  is actually returned, so modifying the returned array
-	 *  will not affect the iteration at all.
-	 */
-	public Object[] toArray()
-	{	return (Object[]) items.clone();
-	}
+    /**
+     * Not part of the Iterator interface, returns the data
+     * set in array form. A clone of the wrapped array
+     * is actually returned, so modifying the returned array
+     * will not affect the iteration at all.
+     */
+    public Object[] toArray() {
+        return (Object[]) items.clone();
+    }
 }	

@@ -26,53 +26,52 @@
  */
 package com.holub.text;
 
-/** Thrown in the event of a Scanner (or parser) failure
+/**
+ * Thrown in the event of a Scanner (or parser) failure
  *
- *	@include /etc/license.txt
+ * @include /etc/license.txt
  */
 
-public class ParseFailure extends Exception
-{
-	private final String inputLine;
-	private final int    inputPosition;
-	private final int	 inputLineNumber;
+public class ParseFailure extends Exception {
+    private final String inputLine;
+    private final int inputPosition;
+    private final int inputLineNumber;
 
-	public ParseFailure( String message,
-						 String inputLine,
-						 int inputPosition, 
-						 int inputLineNumber )
-	{
-		super( message );
-		this.inputPosition   = inputPosition;
-		this.inputLine 		 = inputLine;
-		this.inputLineNumber = inputLineNumber;
-	}
+    public ParseFailure(String message,
+                        String inputLine,
+                        int inputPosition,
+                        int inputLineNumber) {
+        super(message);
+        this.inputPosition = inputPosition;
+        this.inputLine = inputLine;
+        this.inputLineNumber = inputLineNumber;
+    }
 
-	/** Returns a String that shows the current input line and a
-	 *  pointer indicating the current input position.
-	 *  In the following sample, the input is positioned at the
-	 * 	&#64; sign on input line 17:
-	 *  <PRE>
-	 *  Line 17:
-	 *  a = b + &#64; c;
-	 *  ________^
-	 *  </PRE>
-	 *
-	 *  Note that the official "message"  [returned from 
-	 *  {@link Throwable#getMessage()}] is not included in the
-	 *  error report.
-	 */
+    /**
+     * Returns a String that shows the current input line and a
+     * pointer indicating the current input position.
+     * In the following sample, the input is positioned at the
+     * &#64; sign on input line 17:
+     * <PRE>
+     * Line 17:
+     * a = b + &#64; c;
+     * ________^
+     * </PRE>
+     * <p>
+     * Note that the official "message"  [returned from
+     * {@link Throwable#getMessage()}] is not included in the
+     * error report.
+     */
 
-	public String getErrorReport()
-	{	
-		StringBuffer b = new StringBuffer();
-		b.append("Line ");
-		b.append(inputLineNumber + ":\n");
-		b.append(inputLine);
-		b.append("\n");
-		for( int i = 0; i < inputPosition; ++i)
-			b.append("_");
-		b.append("^\n");
-		return b.toString();
-	}
+    public String getErrorReport() {
+        StringBuffer b = new StringBuffer();
+        b.append("Line ");
+        b.append(inputLineNumber + ":\n");
+        b.append(inputLine);
+        b.append("\n");
+        for (int i = 0; i < inputPosition; ++i)
+            b.append("_");
+        b.append("^\n");
+        return b.toString();
+    }
 }

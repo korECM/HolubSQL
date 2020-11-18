@@ -26,48 +26,51 @@
  */
 package com.holub.tools;
 
-/** A convenient container for realying a checked Exception
- *  from a method that can't declare a throws clause to
- *  a calling method that can.  This doesn't happen very
- *  often, but occasionally you don't want to declare
- *  an interface method as throwing an exception that
- *  one of the methods called from the implementation
- *  actually throws. Use it like this:
+/**
+ * A convenient container for realying a checked Exception
+ * from a method that can't declare a throws clause to
+ * a calling method that can.  This doesn't happen very
+ * often, but occasionally you don't want to declare
+ * an interface method as throwing an exception that
+ * one of the methods called from the implementation
+ * actually throws. Use it like this:
  *
- *	<PRE>
- *	inteface X
- *	{	void interfaceMethod(); // throws nothing.
- *	}
+ * <PRE>
+ * inteface X
+ * {	void interfaceMethod(); // throws nothing.
+ * }
+ * <p>
+ * void interfaceMethod()
+ * {	try
+ * {
+ * g();	// throws an IOException
+ * }
+ * catch( IOException e )
+ * {	throw new ThrowableContainer( e );
+ * }
+ * }
+ * <p>
+ * void caller(X implementation) thows IOException
+ * {	try
+ * {	implementation.interfaceMethod();
+ * }
+ * catch( ThrowableContainer e )
+ * {	throw (IOException)(e.contents());
+ * }
+ * }
+ * </PRE>
  *
- *	void interfaceMethod()
- *	{	try
- *		{
- *			g();	// throws an IOException
- *		}
- *		catch( IOException e )
- *		{	throw new ThrowableContainer( e );
- *		}
- *	}
- *
- *	void caller(X implementation) thows IOException
- *	{	try
- *		{	implementation.interfaceMethod();
- *		}
- *		catch( ThrowableContainer e )
- *		{	throw (IOException)(e.contents());
- *		}
- *	}
- *	</PRE>
- *
- *	@include /etc/license.txt
+ * @include /etc/license.txt
  */
 
-public class ThrowableContainer extends RuntimeException
-{	private final Throwable contents;
-	public ThrowableContainer( Throwable contents )
-	{	this.contents = contents;
-	}
-	public Throwable contents()
-	{	return contents;
-	}
+public class ThrowableContainer extends RuntimeException {
+    private final Throwable contents;
+
+    public ThrowableContainer(Throwable contents) {
+        this.contents = contents;
+    }
+
+    public Throwable contents() {
+        return contents;
+    }
 }

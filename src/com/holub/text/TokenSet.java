@@ -26,8 +26,11 @@
  */
 package com.holub.text;
 
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /***
  *  A token set is a collection of tokens that define all possible
@@ -43,88 +46,88 @@ import java.util.regex.*;
  *  (in the distribution jar) for an example of how a token set
  *  is used in conjunction with a Scanner.
  *
- *	@include /etc/license.txt
+ *    @include /etc/license.txt
  */
 
-public class TokenSet
-{
-	private Collection members = new ArrayList();
+public class TokenSet {
+    private Collection members = new ArrayList();
 
-	/** Return an iterator across the Token pool. This iterator
-	 *  is guaranteed to return the tokens in the order that
-	 *  {@link #create} was called. You can use this iterator
-	 *  to list all the tokens in a given set.
-	 */
+    /**
+     * Return an iterator across the Token pool. This iterator
+     * is guaranteed to return the tokens in the order that
+     * {@link #create} was called. You can use this iterator
+     * to list all the tokens in a given set.
+     */
 
-	public Iterator iterator()
-	{	return members.iterator();
-	}
+    public Iterator iterator() {
+        return members.iterator();
+    }
 
-	/**********************************************************************
-	 * Create a Token based on a specification and add it to the current
-	 * set.
-	 * <p>
-	 * An appropriate token type is chosen by examining the input
-	 * specification. In particular, a {@link RegexToken} is
-	 * created unless the input string contains no regular-expression
-	 * metacharacters ({i \\[]{}()$^*+?|}) or starts with a single-quote
-	 * mark ('). In this case, a
-	 * {@link WordToken} is created if the specification ends
-	 * in any character that could occur in a Java identifier;
-	 * otherwise a {@link SimpleToken} is created.
-	 * If a string that starts with a single-quote mark also
-	 * ends with a single-quote mark, the end-quote mark
-	 * is discarded. The end-quote mark is optional.
-	 * <p>
-	 * Tokens are always extracted
-	 * from the beginning of a String, so the characters that
-	 * precede the token are irrelevant.
-	 *
-	 * @see WordToken
-	 * @see RegexToken
-	 * @see SimpleToken
-	 */
+    /**********************************************************************
+     * Create a Token based on a specification and add it to the current
+     * set.
+     * <p>
+     * An appropriate token type is chosen by examining the input
+     * specification. In particular, a {@link RegexToken} is
+     * created unless the input string contains no regular-expression
+     * metacharacters ({i \\[]{}()$^*+?|}) or starts with a single-quote
+     * mark ('). In this case, a
+     * {@link WordToken} is created if the specification ends
+     * in any character that could occur in a Java identifier;
+     * otherwise a {@link SimpleToken} is created.
+     * If a string that starts with a single-quote mark also
+     * ends with a single-quote mark, the end-quote mark
+     * is discarded. The end-quote mark is optional.
+     * <p>
+     * Tokens are always extracted
+     * from the beginning of a String, so the characters that
+     * precede the token are irrelevant.
+     *
+     * @see WordToken
+     * @see RegexToken
+     * @see SimpleToken
+     */
 
-	public Token create( String spec )
-	{	Token token;
-		int start = 1;
+    public Token create(String spec) {
+        Token token;
+        int start = 1;
 
-		if( !spec.startsWith("'") )
-		{	if( containsRegexMetacharacters(spec) )
-			{
-				token = new RegexToken( spec );
-				members.add(token);
-				return token;
-			}
+        if (!spec.startsWith("'")) {
+            if (containsRegexMetacharacters(spec)) {
+                token = new RegexToken(spec);
+                members.add(token);
+                return token;
+            }
 
-			--start;	// don't compensate for leading quote
+            --start;    // don't compensate for leading quote
 
-			// fall through to the "quoted-spec" case
-		}
-		
-		int end = spec.length();
+            // fall through to the "quoted-spec" case
+        }
 
-		if( start==1 &&  spec.endsWith("'") ) // saw leading '
-			--end;
+        int end = spec.length();
 
-		token = Character.isJavaIdentifierPart(spec.charAt(end-1))
-				? (Token) new WordToken  ( spec.substring(start,end) )
-				: (Token) new SimpleToken( spec.substring(start,end) )
-				;
+        if (start == 1 && spec.endsWith("'")) // saw leading '
+            --end;
 
-		members.add( token );
-		return token;
-	}
+        token = Character.isJavaIdentifierPart(spec.charAt(end - 1))
+                ? (Token) new WordToken(spec.substring(start, end))
+                : (Token) new SimpleToken(spec.substring(start, end))
+        ;
 
-	/** Return true if the string argument contains any of the
-	 *  following characters: \\[]{}$^*+?|()
-	 */
-	private static final boolean containsRegexMetacharacters(String s)
-	{	// This method could be implemented more efficiently,
-		// but its not called very often.
-		Matcher m = metacharacters.matcher(s);
-		return m.find();
-	}
-	private static final Pattern metacharacters =
-							Pattern.compile("[\\\\\\[\\]{}$\\^*+?|()]");
+        members.add(token);
+        return token;
+    }
+
+    /**
+     * Return true if the string argument contains any of the
+     * following characters: \\[]{}$^*+?|()
+     */
+    private static final boolean containsRegexMetacharacters(String s) {    // This method could be implemented more efficiently,
+        // but its not called very often.
+        Matcher m = metacharacters.matcher(s);
+        return m.find();
+    }
+
+    private static final Pattern metacharacters =
+            Pattern.compile("[\\\\\\[\\]{}$\\^*+?|()]");
 }

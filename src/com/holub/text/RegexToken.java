@@ -26,42 +26,48 @@
  */
 package com.holub.text;
 
-import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/** Matches a token specified by a regular expression.
- *  (as described in the {@link java.util.regex.Pattern}
- *  class.
+/**
+ * Matches a token specified by a regular expression.
+ * (as described in the {@link java.util.regex.Pattern}
+ * class.
  *
- *	@include /etc/license.txt
- *
- *  @see java.util.regex.Pattern
- *  @see Token
+ * @include /etc/license.txt
+ * @see java.util.regex.Pattern
+ * @see Token
  */
 
-public class RegexToken implements Token
-{
-	private 	   Matcher 		matcher;
-	private final  Pattern 		pattern;
-	private final  String       id;
+public class RegexToken implements Token {
+    private Matcher matcher;
+    private final Pattern pattern;
+    private final String id;
 
-	/** Create a token.
-	 *  @param description a regular expression
-	 *  		({@linkplain java.util.Pattern see}) that describes
-	 *  		the set of lexemes associated with this token.
-	 *  		The expression is case insensitive, so the
-	 *  		expression "ABC" also recognizes "abc".
-	 */
-	public RegexToken(String description)
-	{   id = description;
-		pattern = Pattern.compile(description, Pattern.CASE_INSENSITIVE);
-	}
+    /**
+     * Create a token.
+     *
+     * @param description a regular expression
+     *                    ({@linkplain java.util.Pattern see}) that describes
+     *                    the set of lexemes associated with this token.
+     *                    The expression is case insensitive, so the
+     *                    expression "ABC" also recognizes "abc".
+     */
+    public RegexToken(String description) {
+        id = description;
+        pattern = Pattern.compile(description, Pattern.CASE_INSENSITIVE);
+    }
 
-	public boolean match(String input, int offset)
-	{	matcher = pattern.matcher( input.substring(offset) );
-		return matcher.lookingAt();
-	}
+    public boolean match(String input, int offset) {
+        matcher = pattern.matcher(input.substring(offset));
+        return matcher.lookingAt();
+    }
 
-	public String lexeme()	{ return matcher.group(); }
-	public String toString(){ return id; }
+    public String lexeme() {
+        return matcher.group();
+    }
+
+    public String toString() {
+        return id;
+    }
 }

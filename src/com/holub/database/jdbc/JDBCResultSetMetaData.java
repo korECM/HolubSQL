@@ -26,45 +26,44 @@
  */
 package com.holub.database.jdbc;
 
-import java.sql.*;
-import java.util.*;
+import com.holub.database.Cursor;
+import com.holub.database.jdbc.adapters.ResultSetMetaDataAdapter;
 
-import com.holub.database.*;
-import com.holub.database.jdbc.adapters.*;
+import java.sql.SQLException;
 
-/** A limited version of the result-set metadata class. All methods
- *  not shown throw a {@link SQLException} if called.
+/**
+ * A limited version of the result-set metadata class. All methods
+ * not shown throw a {@link SQLException} if called.
  *
- *  @include /etc/license.txt
+ * @include /etc/license.txt
  */
-public class JDBCResultSetMetaData extends ResultSetMetaDataAdapter
-{
-	private final Cursor cursor;
+public class JDBCResultSetMetaData extends ResultSetMetaDataAdapter {
+    private final Cursor cursor;
 
-	public JDBCResultSetMetaData(Cursor cursor)
-	{	this.cursor = cursor;
-	}
+    public JDBCResultSetMetaData(Cursor cursor) {
+        this.cursor = cursor;
+    }
 
-	public int getColumnType(int column) throws java.sql.SQLException
-	{	return java.sql.Types.VARCHAR;
-	}
+    public int getColumnType(int column) throws java.sql.SQLException {
+        return java.sql.Types.VARCHAR;
+    }
 
-	public String getColumnTypeName(int column)throws java.sql.SQLException
-	{	return "VARCHAR";
-	}
+    public String getColumnTypeName(int column) throws java.sql.SQLException {
+        return "VARCHAR";
+    }
 
-	public String getColumnName(int index) throws java.sql.SQLException
-	{	// The Cursor is zero indexed, which makes sense from a Java
-		// perspective. JDBC is 1 indexed, however; thus the -1.
+    public String getColumnName(int index) throws java.sql.SQLException {    // The Cursor is zero indexed, which
+        // makes sense from a Java
+        // perspective. JDBC is 1 indexed, however; thus the -1.
 
-		return cursor.columnName( index-1 );
-	}
+        return cursor.columnName(index - 1);
+    }
 
-	public int getColumnCount() throws java.sql.SQLException
-	{	return cursor.columnCount();
-	}
+    public int getColumnCount() throws java.sql.SQLException {
+        return cursor.columnCount();
+    }
 
-	public String getTableName() throws java.sql.SQLException
-	{	return cursor.tableName();
-	}
+    public String getTableName() throws java.sql.SQLException {
+        return cursor.tableName();
+    }
 }

@@ -26,101 +26,104 @@
  */
 package com.holub.database.jdbc;
 
-import java.sql.*;
-import java.text.*;
+import com.holub.database.Cursor;
+import com.holub.database.Table;
+import com.holub.database.jdbc.adapters.ResultSetAdapter;
 
-import com.holub.database.*;
-import com.holub.database.jdbc.adapters.*;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.text.NumberFormat;
+import java.text.ParseException;
 
-/** A limited version of the result-set class. All methods
- *  not shown throw a {@link SQLException} if called. Note
- *  the the underlying table actually holds nothing but
- *  strings, so the numeric accessors
- *  (e.g. {@link #getDouble})
- *  are doing string-to-number and number-to-string
- *  conversions. These conversions might fail if the
- *  underlying String doesn't represent a number.
+/**
+ * A limited version of the result-set class. All methods
+ * not shown throw a {@link SQLException} if called. Note
+ * the the underlying table actually holds nothing but
+ * strings, so the numeric accessors
+ * (e.g. {@link #getDouble})
+ * are doing string-to-number and number-to-string
+ * conversions. These conversions might fail if the
+ * underlying String doesn't represent a number.
  *
  * @include /etc/license.txt
  */
 
-public class JDBCResultSet extends ResultSetAdapter
-{
-	private 	   final Cursor cursor;
-	private static final NumberFormat  format =
-								NumberFormat.getInstance();
+public class JDBCResultSet extends ResultSetAdapter {
+    private final Cursor cursor;
+    private static final NumberFormat format =
+            NumberFormat.getInstance();
 
-	/** Wrap a result set around a Cursor. The cursor
-	 *  should never have been advanced; just pass this constructor
-	 *  the return value from {@link Table#rows}.
-	 */
-	public JDBCResultSet(Cursor cursor) throws SQLException
-	{	this.cursor = cursor;
-	}
+    /**
+     * Wrap a result set around a Cursor. The cursor
+     * should never have been advanced; just pass this constructor
+     * the return value from {@link Table#rows}.
+     */
+    public JDBCResultSet(Cursor cursor) throws SQLException {
+        this.cursor = cursor;
+    }
 
-	public boolean next()
-	{	return cursor.advance();
-	}
+    public boolean next() {
+        return cursor.advance();
+    }
 
-	public String getString(String columnName) throws SQLException
-	{	try
-		{	Object contents = cursor.column(columnName);
-			return (contents==null) ? null : contents.toString();
-		}
-		catch( IndexOutOfBoundsException e )
-		{	throw new SQLException("column "+columnName+" doesn't exist" );
-		}
-	}
+    public String getString(String columnName) throws SQLException {
+        try {
+            Object contents = cursor.column(columnName);
+            return (contents == null) ? null : contents.toString();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("column " + columnName + " doesn't exist");
+        }
+    }
 
-	public double getDouble(String columnName) throws SQLException
-	{	try
-		{	String contents = getString(columnName);
-			return (contents == null)
-					? 0.0
-					: format.parse( contents ).doubleValue()
-					;
-		}
-		catch( ParseException e )
-		{	throw new SQLException("field doesn't contain a number");
-		}
-	}
+    public double getDouble(String columnName) throws SQLException {
+        try {
+            String contents = getString(columnName);
+            return (contents == null)
+                    ? 0.0
+                    : format.parse(contents).doubleValue()
+                    ;
+        } catch (ParseException e) {
+            throw new SQLException("field doesn't contain a number");
+        }
+    }
 
-	public int getInt(String columnName) throws SQLException
-	{	try
-		{	String contents = getString(columnName);
-			return (contents == null)
-					? 0
-					: format.parse( contents ).intValue()
-					;
-		}
-		catch( ParseException e )
-		{	throw new SQLException("field doesn't contain a number");
-		}
-	}
+    public int getInt(String columnName) throws SQLException {
+        try {
+            String contents = getString(columnName);
+            return (contents == null)
+                    ? 0
+                    : format.parse(contents).intValue()
+                    ;
+        } catch (ParseException e) {
+            throw new SQLException("field doesn't contain a number");
+        }
+    }
 
-	public long getLong(String columnName) throws SQLException
-	{	try
-		{	String contents = getString(columnName);
-			return (contents == null)
-					? 0L
-					: format.parse( contents ).longValue()
-					;
-		}
-		catch( ParseException e )
-		{	throw new SQLException("field doesn't contain a number");
-		}
-	}
+    public long getLong(String columnName) throws SQLException {
+        try {
+            String contents = getString(columnName);
+            return (contents == null)
+                    ? 0L
+                    : format.parse(contents).longValue()
+                    ;
+        } catch (ParseException e) {
+            throw new SQLException("field doesn't contain a number");
+        }
+    }
 
-	public void updateNull(String columnName )
-	{	cursor.update(columnName, null );
-	}
-	public void updateDouble(String columnName, double value)
-	{	cursor.update(columnName, format.format(value) );
-	}
-	public void updateInt(String columnName, long value)
-	{	cursor.update(columnName, format.format(value) );
-	}
-	public ResultSetMetaData getMetaData() throws SQLException
-	{	return new JDBCResultSetMetaData(cursor);
-	}
+    public void updateNull(String columnName) {
+        cursor.update(columnName, null);
+    }
+
+    public void updateDouble(String columnName, double value) {
+        cursor.update(columnName, format.format(value));
+    }
+
+    public void updateInt(String columnName, long value) {
+        cursor.update(columnName, format.format(value));
+    }
+
+    public ResultSetMetaData getMetaData() throws SQLException {
+        return new JDBCResultSetMetaData(cursor);
+    }
 }
