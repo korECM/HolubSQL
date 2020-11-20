@@ -858,7 +858,6 @@ public final class Database {    /* The directory that represents the database.
 
             List columns = idList();
 
-
             String into = null;
             if (in.matchAdvance(INTO) != null)
                 into = in.required(IDENTIFIER);
@@ -874,14 +873,12 @@ public final class Database {    /* The directory that represents the database.
 
             // SELECT 절에서 명시한 column과 ORDER BY에서 사용하는 column을 모두 포함하는 List
             // 이 List를 사용해서 초기 Table 탐색을 진행한다.
-            List columnNamesForWhereClause;
+            List columnNamesForWhereClause = new ArrayList();
 
             // ORDER BY에서 명시된 column이 존재하는 경우
             // 만약 SELECT *가 사용된 경우 아직 테이블의 모든 column name을 가져올 수 없으므로
             // 1차 탐색을 마친 후 추가한다
             if (orderColumns != null) {
-                columnNamesForWhereClause = new ArrayList();
-
                 // SELECT *가 아니라면 columns를 포함하는 List 생성
                 if (columns != null) columnNamesForWhereClause.addAll(columns);
 
@@ -902,38 +899,7 @@ public final class Database {    /* The directory that represents the database.
 
             // ORDER BY가 주어진 경우
             if (orderColumns != null) {
-                // SELECT *인 경우
-                if (columns == null) {
-                    Cursor c = result.rows();
-                    columns = new ArrayList();
-                    for (int i = 0; i < c.columnCount(); i++) {
-                        columns.add(c.columnName(i));
-                    }
-                    // doSelect에서 얻은 모든 column 이름을 추가
-                    columnNamesForWhereClause.addAll(columns);
-                }
-                // 실제 SELECT 절에서 명시된 column 만을 포함하는 테이블 생성
-                Table orderedTable = TableFactory.create(null, (String[]) columns.toArray(new String[0]));
-                // 정렬을 위해 해당 테이블의 값을 List<Map>으로 변경
-                // 정렬의 경우 SELECT 절에 존재하지 않는 속성으로도 정렬할 수 있으므로
-                // ORDER BY column이 포함된 columnNameForWhereClause를 전달해야 된다
-                List<Map<String, String>> rowList = getTableMap(result.rows(), columnNamesForWhereClause);
-
-                // ORDER BY 에서 주어졌던 정렬 방법으로 List 정렬
-                Collections.sort(rowList, OrderFactory.getOrderComparator(orderColumns));
-
-                // 정렬한 값을 다시 테이블에 삽입
-                List finalColumns = columns;
-                for (Map<String, String> row : rowList) {
-                    orderedTable.insert(
-                            row.entrySet().stream()
-                                    .filter(entry -> finalColumns.contains(entry.getKey()))
-                                    .map(entry -> entry.getValue())
-                                    .toArray()
-                    );
-                }
-
-                result = orderedTable;
+                result = sortTable(result, columns, columnNamesForWhereClause, orderColumns);
             }
 
             if (isDistinctQuery) {
@@ -963,6 +929,42 @@ public final class Database {    /* The directory that represents the database.
         }
 
         return null;
+    }
+
+
+    private Table sortTable(Table result, List columns, List columnNamesForWhereClause,
+                            List<OrderFactory.Order> orderColumns) {
+        // SELECT *인 경우
+        if (columns == null) {
+            Cursor c = result.rows();
+            columns = new ArrayList();
+            for (int i = 0; i < c.columnCount(); i++) {
+                columns.add(c.columnName(i));
+            }
+            // doSelect에서 얻은 모든 column 이름을 추가
+            columnNamesForWhereClause.addAll(columns);
+        }
+        // 실제 SELECT 절에서 명시된 column 만을 포함하는 테이블 생성
+        Table orderedTable = TableFactory.create(null, (String[]) columns.toArray(new String[0]));
+        // 정렬을 위해 해당 테이블의 값을 List<Map>으로 변경
+        // 정렬의 경우 SELECT 절에 존재하지 않는 속성으로도 정렬할 수 있으므로
+        // ORDER BY column이 포함된 columnNameForWhereClause를 전달해야 된다
+        List<Map<String, String>> rowList = getTableMap(result.rows(), columnNamesForWhereClause);
+
+        // ORDER BY 에서 주어졌던 정렬 방법으로 List 정렬
+        Collections.sort(rowList, OrderFactory.getOrderComparator(orderColumns));
+
+        // 정렬한 값을 다시 테이블에 삽입
+        List finalColumns = columns;
+        for (Map<String, String> row : rowList) {
+            orderedTable.insert(
+                    row.entrySet().stream()
+                            .filter(entry -> finalColumns.contains(entry.getKey()))
+                            .map(entry -> entry.getValue())
+                            .toArray()
+            );
+        }
+        return orderedTable;
     }
 
     // ORDER BY 절을 분석하는 함수
