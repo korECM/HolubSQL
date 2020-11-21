@@ -275,6 +275,10 @@ import java.util.*;
 
             registerDelete(oldRow);
         }
+
+        public void accept(Visitor visitor) {
+            visitor.visitRow(this);
+        }
     }
 
     //@cursor-end

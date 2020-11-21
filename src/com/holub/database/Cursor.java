@@ -140,4 +140,6 @@ public interface Cursor {
      * Delete the row at the current cursor position.
      */
     void delete();
+
+    void accept(Visitor visitor);
 }
