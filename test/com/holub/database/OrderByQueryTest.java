@@ -176,7 +176,6 @@ public class OrderByQueryTest {
 
         result = database.execute("SELECT * FROM school ORDER BY year DESC");
         Assertions.assertTrue(isSorted(result.rows(), "year", false));
-        System.out.println(result.toString());
     }
 
     @Test
