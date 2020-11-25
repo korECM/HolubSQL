@@ -440,6 +440,11 @@ public final class Database {    /* The directory that represents the database.
             BY = tokens.create("'BY"),
             ASC = tokens.create("'ASC"),
             DESC = tokens.create("'DESC"),
+            LEFT = tokens.create("'LEFT"),
+            RIGHT = tokens.create("'RIGHT"),
+            OUTER = tokens.create("'OUTER"),
+            JOIN = tokens.create("'JOIN"),
+            ON = tokens.create("'ON"),
 
     WORK = tokens.create("WORK|TRAN(SACTION)?"),
             ADDITIVE = tokens.create("\\+|-"),
@@ -875,7 +880,7 @@ public final class Database {    /* The directory that represents the database.
                 into = in.required(IDENTIFIER);
 
             in.required(FROM);
-            List requestedTableNames = idList();
+            List<String> requestedTableNames = tableIdList();
 
             Expression where = (in.matchAdvance(WHERE) == null)
                     ? null : expr();
@@ -994,7 +999,7 @@ public final class Database {    /* The directory that represents the database.
     }
 
     // 테이블을 List<Map> 형태로 반환하는 메소드
-    // 이 때 모든 column을 변환하는 것이 아니라
+    // 이 때 columns가 주어졌다면 모든 column을 변환하는 것이 아니라
     // 주어진 columns에 포함되는 것들만 반환한다
     private List<Map<String, String>> getTableMap(Cursor c, List columns) {
         List<Map<String, String>> rows = new ArrayList<>();
@@ -1002,12 +1007,21 @@ public final class Database {    /* The directory that represents the database.
             Map<String, String> map = new LinkedHashMap<>();
             for (int i = 0; i < c.columnCount(); i++) {
                 String columnName = c.columnName(i);
-                if (columns.contains(columnName))
+                if (columns != null && columns.contains(columnName))
                     map.put(columnName, c.column(columnName).toString());
             }
             rows.add(map);
         }
         return rows;
+    }
+
+    private List<String> getColumnNames(Cursor c) {
+        int length = c.columnCount();
+        List<String> columnsNames = new ArrayList<>();
+        for (int i = 0; i < length; i++) {
+            columnsNames.add(c.columnName(i));
+        }
+        return columnsNames;
     }
 
     private List selectIdList() throws ParseFailure {
@@ -1031,7 +1045,7 @@ public final class Database {    /* The directory that represents the database.
         return identifiers;
     }
 
-    private Table addAggregateValue(Cursor c, List<String> aggregateColumnList){
+    private Table addAggregateValue(Cursor c, List<String> aggregateColumnList) {
         // aggregate 이름을 포함하는 테이블 생성
         Table aggregatedTable = TableFactory.create(null, aggregateColumnList.toArray(new String[0]));
         // aggregate 처리를 위한 Visitor 생성
@@ -1105,6 +1119,77 @@ public final class Database {    /* The directory that represents the database.
             columns.addAll(temp);
         }
         return isAggregateQuery;
+    }
+
+    private List tableIdList() throws ParseFailure {
+        List<String> identifiers = null;
+        if (in.matchAdvance(STAR) == null) {
+            identifiers = new ArrayList();
+            String id;
+            while ((id = in.required(IDENTIFIER)) != null) {
+                String direction;
+                if ((direction = in.matchAdvance(LEFT)) != null || (direction = in.matchAdvance(RIGHT)) != null) {
+                    List<String> tableNames = new ArrayList<>();
+
+                    in.required(OUTER);
+                    in.required(JOIN);
+
+                    tableNames.add(id);
+                    id = in.required(IDENTIFIER);
+                    tableNames.add(id);
+
+                    in.required(ON);
+                    Expression where = expr();
+
+                    String tableName = processOuterJoin(tableNames, where, direction.equals("left"));
+                    identifiers.add(tableName);
+                } else {
+                    identifiers.add(id);
+                }
+                if (in.matchAdvance(COMMA) == null)
+                    break;
+            }
+        }
+        return identifiers;
+    }
+
+    private String processOuterJoin(List<String> tableNames, Expression where,
+                                    boolean isLeft) throws ParseFailure {
+        String primaryTableName = tableNames.get(isLeft ? 0 : 1);
+        String secondTableName = tableNames.get(isLeft == false ? 0 : 1);
+        Table primary = (Table) tables.get(primaryTableName);
+
+        Table temporaryTable = ((UnmodifiableTable) doSelect(null, null,
+                tableNames,
+                where)).extract();
+
+        List<String> temporaryTableColumnNames = getColumnNames(temporaryTable.rows());
+        List<String> primaryTableColumnNames = getColumnNames(primary.rows());
+
+        List<Map<String, String>> primaryRowList = getTableMap(primary.rows(),
+                primaryTableColumnNames);
+        List<Map<String, String>> temporaryRowList = getTableMap(temporaryTable.rows(),
+                primaryTableColumnNames);
+
+        List<Map<String, String>> willBeInsertedList = new ArrayList<>(primaryRowList);
+
+        for (Map<String, String> map : primaryRowList) {
+            for (Map<String, String> primaryMap : temporaryRowList) {
+                if (map.equals(primaryMap)) willBeInsertedList.remove(map);
+            }
+        }
+
+        for (Map<String, String> insertedData : willBeInsertedList) {
+            List<String> values = new ArrayList<>();
+            for (String columnName : temporaryTableColumnNames) {
+                values.add(insertedData.getOrDefault(columnName, "null"));
+            }
+            temporaryTable.insert(temporaryTableColumnNames, values);
+        }
+
+        String temporaryTableName = primaryTableName + " LEFT OUTER JOIN " + secondTableName;
+        tables.put(temporaryTableName, temporaryTable);
+        return temporaryTableName;
     }
 
     //----------------------------------------------------------------------
