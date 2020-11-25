@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A table is a database-like table that provides support for
@@ -53,6 +54,8 @@ public interface Table extends Serializable, Cloneable {
      * piece of information that it was given.
      */
     String name();
+
+    String[] columnNames();
 
     /**
      * Rename the table to the indicated name. This method
@@ -173,6 +176,12 @@ public interface Table extends Serializable, Cloneable {
      * <code>commit(true)</code>, for example.
      */
     public static final boolean ALL = true;
+
+    public Table select(Selector where, String[] requestedColumns, Table[] otherTables,
+                        TableHandler[] handlers);
+
+    public Table select(Selector where, List<String> requestedColumns,
+                        List<Table> otherTables, TableHandler[] handlers);
 
     /*** **********************************************************************
      *  Create an unmodifiable table that contains selected rows

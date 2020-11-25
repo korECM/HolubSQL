@@ -858,22 +858,25 @@ public final class Database {    /* The directory that represents the database.
             affectedRows = doDelete(tableName, expr());
         } else if (in.matchAdvance(SELECT) != null) {
 
-            Boolean isDistinctQuery = false;
-            Boolean isAggregateQuery = false;
+            HandlerBuilder builder = new HandlerBuilder();
 
             if (in.matchAdvance(DISTINCT) != null) {
-                isDistinctQuery = true;
+                builder.distinct();
             }
 
             // 테이블 탐색을 위한 columns
             // ex) MAX(year) -> year
             List<String> columns = selectIdList();
+
             // aggregate 관련 함수도 담고있는 columnNames
             List<String> aggregateColumnList = new ArrayList<>();
 
             if (columns != null) {
-                isAggregateQuery = aggregateColumnToNormalColumn(columns, aggregateColumnList);
+                if(aggregateColumnToNormalColumn(columns, aggregateColumnList)){
+                    builder.aggregate(aggregateColumnList);
+                }
             }
+            builder.selectColumns(columns);
 
             String into = null;
             if (in.matchAdvance(INTO) != null)
@@ -888,44 +891,13 @@ public final class Database {    /* The directory that represents the database.
             // ORDER BY에서 사용하는 column List
             List<OrderFactory.Order> orderColumns = orderList();
 
-            // SELECT 절에서 명시한 column과 ORDER BY에서 사용하는 column을 모두 포함하는 List
-            // 이 List를 사용해서 초기 Table 탐색을 진행한다.
-            List columnNamesForWhereClause = new ArrayList();
-
-            // ORDER BY에서 명시된 column이 존재하는 경우
-            // 만약 SELECT *가 사용된 경우 아직 테이블의 모든 column name을 가져올 수 없으므로
-            // 1차 탐색을 마친 후 추가한다
             if (orderColumns != null) {
-                // SELECT *가 아니라면 columns를 포함하는 List 생성
-                if (columns != null) columnNamesForWhereClause.addAll(columns);
-
-                // SELECT 절의 column에 ORDER BY column 추가
-                columnNamesForWhereClause.addAll(
-                        orderColumns.stream()
-                                .map(order -> order.columnName)
-                                .collect(Collectors.toList())
-                );
-            } else {
-                columnNamesForWhereClause = columns;
+                builder.order(orderColumns);
             }
 
-            // 만약 SELECT * 구문인 경우 ORDER BY column와 상관없이 null을 전달해 모든 column에 대한 select를 해야된다
-            Table result = doSelect(columns == null ? null : columnNamesForWhereClause, into,
+            Table result = doSelect(columns, into,
                     requestedTableNames,
-                    where);
-
-            // ORDER BY가 주어진 경우
-            if (orderColumns != null) {
-                result = sortTable(result, columns, columnNamesForWhereClause, orderColumns);
-            }
-
-            if (isDistinctQuery) {
-                result = removeDuplicate(result);
-            }
-
-            if (isAggregateQuery) {
-                result = addAggregateValue(result.rows(), aggregateColumnList);
-            }
+                    where, builder.getHandlerArray());
 
             return result;
         } else {
@@ -934,42 +906,6 @@ public final class Database {    /* The directory that represents the database.
         }
 
         return null;
-    }
-
-
-    private Table sortTable(Table result, List columns, List columnNamesForWhereClause,
-                            List<OrderFactory.Order> orderColumns) {
-        // SELECT *인 경우
-        if (columns == null) {
-            Cursor c = result.rows();
-            columns = new ArrayList();
-            for (int i = 0; i < c.columnCount(); i++) {
-                columns.add(c.columnName(i));
-            }
-            // doSelect에서 얻은 모든 column 이름을 추가
-            columnNamesForWhereClause.addAll(columns);
-        }
-        // 실제 SELECT 절에서 명시된 column 만을 포함하는 테이블 생성
-        Table orderedTable = TableFactory.create(null, (String[]) columns.toArray(new String[0]));
-        // 정렬을 위해 해당 테이블의 값을 List<Map>으로 변경
-        // 정렬의 경우 SELECT 절에 존재하지 않는 속성으로도 정렬할 수 있으므로
-        // ORDER BY column이 포함된 columnNameForWhereClause를 전달해야 된다
-        List<Map<String, String>> rowList = getTableMap(result.rows(), columnNamesForWhereClause);
-
-        // ORDER BY 에서 주어졌던 정렬 방법으로 List 정렬
-        Collections.sort(rowList, OrderFactory.getOrderComparator(orderColumns));
-
-        // 정렬한 값을 다시 테이블에 삽입
-        List finalColumns = columns;
-        for (Map<String, String> row : rowList) {
-            orderedTable.insert(
-                    row.entrySet().stream()
-                            .filter(entry -> finalColumns.contains(entry.getKey()))
-                            .map(entry -> entry.getValue())
-                            .toArray()
-            );
-        }
-        return orderedTable;
     }
 
     // ORDER BY 절을 분석하는 함수
@@ -996,32 +932,6 @@ public final class Database {    /* The directory that represents the database.
     // ASC인 경우 true 반환
     private boolean isAsc() throws ParseFailure {
         return in.matchAdvance(DESC) == null;
-    }
-
-    // 테이블을 List<Map> 형태로 반환하는 메소드
-    // 이 때 columns가 주어졌다면 모든 column을 변환하는 것이 아니라
-    // 주어진 columns에 포함되는 것들만 반환한다
-    private List<Map<String, String>> getTableMap(Cursor c, List columns) {
-        List<Map<String, String>> rows = new ArrayList<>();
-        while (c.advance()) {
-            Map<String, String> map = new LinkedHashMap<>();
-            for (int i = 0; i < c.columnCount(); i++) {
-                String columnName = c.columnName(i);
-                if (columns != null && columns.contains(columnName))
-                    map.put(columnName, c.column(columnName).toString());
-            }
-            rows.add(map);
-        }
-        return rows;
-    }
-
-    private List<String> getColumnNames(Cursor c) {
-        int length = c.columnCount();
-        List<String> columnsNames = new ArrayList<>();
-        for (int i = 0; i < length; i++) {
-            columnsNames.add(c.columnName(i));
-        }
-        return columnsNames;
     }
 
     private List selectIdList() throws ParseFailure {
@@ -1065,26 +975,6 @@ public final class Database {    /* The directory that represents the database.
                         .map(Visitor::getValue)
                         .collect(Collectors.toList()));
         return aggregatedTable;
-    }
-
-    private Table removeDuplicate(Table result) {
-        HashSet<String> checkData = new HashSet<>();
-
-        return result.select(new Selector.Adapter() {
-            @Override
-            public boolean approve(Cursor[] rows) {
-                Iterator it = rows[0].columns();
-                StringBuilder sb = new StringBuilder();
-                while (it.hasNext()) {
-                    sb.append(it.next().toString());
-                }
-                if (checkData.contains(sb.toString())) {
-                    return false;
-                }
-                checkData.add(sb.toString());
-                return true;
-            }
-        });
     }
 
     private Boolean aggregateColumnToNormalColumn(List<String> columns, List<String> aggregateColumnList) throws ParseFailure {
@@ -1161,14 +1051,14 @@ public final class Database {    /* The directory that represents the database.
 
         Table temporaryTable = ((UnmodifiableTable) doSelect(null, null,
                 tableNames,
-                where)).extract();
+                where, null)).extract();
 
-        List<String> temporaryTableColumnNames = getColumnNames(temporaryTable.rows());
-        List<String> primaryTableColumnNames = getColumnNames(primary.rows());
+        List<String> temporaryTableColumnNames = Arrays.asList(temporaryTable.columnNames().clone());
+        List<String> primaryTableColumnNames = Arrays.asList(primary.columnNames());
 
-        List<Map<String, String>> primaryRowList = getTableMap(primary.rows(),
+        List<Map<String, String>> primaryRowList = TableHelper.tableToMapList(primary.rows(),
                 primaryTableColumnNames);
-        List<Map<String, String>> temporaryRowList = getTableMap(temporaryTable.rows(),
+        List<Map<String, String>> temporaryRowList = TableHelper.tableToMapList(temporaryTable.rows(),
                 primaryTableColumnNames);
 
         List<Map<String, String>> willBeInsertedList = new ArrayList<>(primaryRowList);
@@ -1792,7 +1682,7 @@ public final class Database {    /* The directory that represents the database.
     //
     private Table doSelect(List columns, String into,
                            List requestedTableNames,
-                           final Expression where)
+                           final Expression where, TableHandler[] handlers)
             throws ParseFailure {
 
         Iterator tableNames = requestedTableNames.iterator();
@@ -1833,7 +1723,7 @@ public final class Database {    /* The directory that represents the database.
                 };
 
         try {
-            Table result = primary.select(selector, columns, participantsInJoin);
+            Table result = primary.select(selector, columns, participantsInJoin, handlers);
 
             // If this is a "SELECT INTO <table>" request, remove the
             // returned table from the UnmodifiableTable wrapper, give

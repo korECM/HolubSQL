@@ -74,6 +74,7 @@ public class DistinctQueryTest {
 
 
         result = database.execute("SELECT DISTINCT age, schoolName FROM person");
+        System.out.println(result.toString());
         Assertions.assertTrue(hasTableDistinctRow(result) == false);
     }
 

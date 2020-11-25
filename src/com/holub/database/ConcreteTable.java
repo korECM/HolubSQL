@@ -594,6 +594,21 @@ import java.util.*;
         resultTable.insert( /*requestedColumns,*/ resultRow);
     }
 
+    public Table select(Selector where, String[] requestedColumns,
+                        Table[] otherTables, TableHandler[] handlers) {
+        if (handlers == null || handlers.length == 0)
+            return select(where, requestedColumns, otherTables);
+
+        Table target = ((UnmodifiableTable) select(where, null, otherTables)).extract();
+
+        for (TableHandler handler : handlers) {
+            if (handler != null)
+                target = handler.handle(target);
+        }
+
+        return target;
+    }
+
     /**
      * A collection variant on the array version. Just converts the collection
      * to an array and then chains to the other version
@@ -631,6 +646,20 @@ import java.util.*;
         return select(where, columnNames, otherTables);
     }
 
+    public Table select(Selector where, List<String> requestedColumns,
+                        List<Table> other, TableHandler[] handlers) {
+        String[] columnNames = null;
+        Table[] otherTables = null;
+        if (requestedColumns != null) {
+            columnNames = requestedColumns.toArray(new String[0]);
+        }
+        if (other != null) {
+            otherTables = other.toArray(new Table[0]);
+        }
+
+        return select(where, columnNames, otherTables, handlers);
+    }
+
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     public Table select(Selector where, Collection requestedColumns) {
         return select(where, requestedColumns, null);
@@ -642,6 +671,10 @@ import java.util.*;
     //
     public String name() {
         return tableName;
+    }
+
+    public String[] columnNames() {
+        return columnNames;
     }
 
     public void rename(String s) {

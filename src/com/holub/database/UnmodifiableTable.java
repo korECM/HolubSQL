@@ -28,6 +28,7 @@ package com.holub.database;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * This decorator of the Table class just wraps another table,
@@ -110,6 +111,17 @@ public class UnmodifiableTable implements Table {
         illegal();
     }
 
+    @Override
+    public Table select(Selector where, String[] requestedColumns, Table[] otherTables, TableHandler[] handlers) {
+        return wrapped.select(where, requestedColumns, otherTables, handlers);
+    }
+
+    @Override
+    public Table select(Selector where, List<String> requestedColumns, List<Table> otherTables,
+                        TableHandler[] handlers) {
+        return wrapped.select(where, requestedColumns, otherTables, handlers);
+    }
+
     private final void illegal() {
         throw new UnsupportedOperationException();
     }
@@ -148,6 +160,10 @@ public class UnmodifiableTable implements Table {
 
     public String name() {
         return wrapped.name();
+    }
+
+    public String[] columnNames() {
+        return wrapped.columnNames();
     }
 
     public void rename(String s) {
