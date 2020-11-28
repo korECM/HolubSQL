@@ -1024,7 +1024,7 @@ public final class Database {    /* The directory that represents the database.
     private String processOuterJoin(List<String> tableNames, Expression where,
                                     boolean isLeft) throws ParseFailure {
         String primaryTableName = tableNames.get(isLeft ? 0 : 1);
-        String secondTableName = tableNames.get(isLeft == false ? 0 : 1);
+        String secondTableName = tableNames.get(!isLeft ? 0 : 1);
         Table primary = (Table) tables.get(primaryTableName);
 
         Table temporaryTable = ((UnmodifiableTable) doSelect(null, null,
@@ -1055,7 +1055,7 @@ public final class Database {    /* The directory that represents the database.
             temporaryTable.insert(temporaryTableColumnNames, values);
         }
 
-        String temporaryTableName = primaryTableName + " LEFT OUTER JOIN " + secondTableName;
+        String temporaryTableName = primaryTableName +  (isLeft ? " LEFT ": " RIGHT ") + "OUTER JOIN " + secondTableName;
         tables.put(temporaryTableName, temporaryTable);
         return temporaryTableName;
     }
