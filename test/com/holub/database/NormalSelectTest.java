@@ -32,13 +32,6 @@ public class NormalSelectTest {
 
     }
 
-
-    private String column(Table t, String columnName) {
-        Cursor c = t.rows();
-        c.advance();
-        return c.column(columnName).toString();
-    }
-
     private boolean containColumn(Table t, String columnName) {
         Cursor c = t.rows();
         List<String> columns = new ArrayList<>();
@@ -51,19 +44,22 @@ public class NormalSelectTest {
     }
 
     @Test
-    void test() throws IOException, ParseFailure {
+    void SelectAllContainsAllColumns() throws IOException, ParseFailure {
         result = database.execute("SELECT * FROM test");
         Assertions.assertTrue(containColumn(result, "a"));
         Assertions.assertTrue(containColumn(result, "b"));
         Assertions.assertTrue(containColumn(result, "c"));
+    }
+
+    @Test
+    void ColumnNotSelectShouldNotExistInResult() throws IOException, ParseFailure {
         result = database.execute("SELECT a FROM test");
         Assertions.assertTrue(containColumn(result, "a"));
-        Assertions.assertTrue(containColumn(result, "b") == false);
-        Assertions.assertTrue(containColumn(result, "c") == false);
+        Assertions.assertFalse(containColumn(result, "b"));
+        Assertions.assertFalse(containColumn(result, "c"));
         result = database.execute("SELECT b, c FROM test");
-        Assertions.assertTrue(containColumn(result, "a") == false);
+        Assertions.assertFalse(containColumn(result, "a"));
         Assertions.assertTrue(containColumn(result, "b"));
         Assertions.assertTrue(containColumn(result, "c"));
-
     }
 }
