@@ -38,7 +38,6 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /***
  *  This class implements a small SQL-subset database.
@@ -285,6 +284,8 @@ public final class Database {    /* The directory that represents the database.
      */
 
     private final Map tables = new TableMap(new HashMap());
+
+    private final List<String> tempTableNameList = new ArrayList<>();
 
     /**
      * The current transaction-nesting level, incremented for
@@ -872,7 +873,7 @@ public final class Database {    /* The directory that represents the database.
             List<String> aggregateColumnList = new ArrayList<>();
 
             if (columns != null) {
-                if(aggregateColumnToNormalColumn(columns, aggregateColumnList)){
+                if (aggregateColumnToNormalColumn(columns, aggregateColumnList)) {
                     builder.aggregate(aggregateColumnList);
                 }
             }
@@ -899,6 +900,7 @@ public final class Database {    /* The directory that represents the database.
                     requestedTableNames,
                     where, builder.getHandlerArray());
 
+            cleanUpTempTable();
             return result;
         } else {
             error("Expected insert, create, drop, use, "
@@ -989,10 +991,10 @@ public final class Database {    /* The directory that represents the database.
         return isAggregateQuery;
     }
 
-    private List tableIdList() throws ParseFailure {
+    private List<String> tableIdList() throws ParseFailure {
         List<String> identifiers = null;
         if (in.matchAdvance(STAR) == null) {
-            identifiers = new ArrayList();
+            identifiers = new ArrayList<>();
             String id;
             while ((id = in.required(IDENTIFIER)) != null) {
                 String direction;
@@ -1019,6 +1021,13 @@ public final class Database {    /* The directory that represents the database.
             }
         }
         return identifiers;
+    }
+
+    private void cleanUpTempTable() {
+        for (String tableName : tempTableNameList) {
+            tables.remove(tableName);
+        }
+        tempTableNameList.clear();
     }
 
     private String processOuterJoin(List<String> tableNames, Expression where,
@@ -1055,8 +1064,10 @@ public final class Database {    /* The directory that represents the database.
             temporaryTable.insert(temporaryTableColumnNames, values);
         }
 
-        String temporaryTableName = primaryTableName +  (isLeft ? " LEFT ": " RIGHT ") + "OUTER JOIN " + secondTableName;
+        String temporaryTableName =
+                primaryTableName + (isLeft ? "LEFT" : "RIGHT") + "OUTERJOIN" + secondTableName;
         tables.put(temporaryTableName, temporaryTable);
+        tempTableNameList.add(temporaryTableName);
         return temporaryTableName;
     }
 

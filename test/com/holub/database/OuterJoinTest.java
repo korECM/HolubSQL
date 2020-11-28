@@ -108,4 +108,12 @@ public class OuterJoinTest {
         addRow(expected, new String[]{"name", "a"}, new String[]{"null", "4"});
         Assertions.assertTrue(equals(result.rows(), expected));
     }
+
+    @Test
+    void tempTableShoutNotLeftInDatabase() throws IOException, ParseFailure {
+        database.execute("SELECT * FROM test1 RIGHT OUTER JOIN test2 ON test1.b = test2.a");
+
+        Assertions.assertThrows(RuntimeException.class, () -> database.execute("SELECT * FROM test1RIGHTOUTERJOINtest2"));
+
+    }
 }
