@@ -955,28 +955,6 @@ public final class Database {    /* The directory that represents the database.
         return identifiers;
     }
 
-    private Table addAggregateValue(Cursor c, List<String> aggregateColumnList) {
-        // aggregate 이름을 포함하는 테이블 생성
-        Table aggregatedTable = TableFactory.create(null, aggregateColumnList.toArray(new String[0]));
-        // aggregate 처리를 위한 Visitor 생성
-        List<Visitor> visitorList =
-                aggregateColumnList.stream()
-                        .map(VisitorFactory::getVisitor)
-                        .collect(Collectors.toList());
-
-        while (c.advance()) {
-            for (Visitor visitor : visitorList) {
-                c.accept(visitor);
-            }
-        }
-        // Visit 결과를 테이블에 삽입
-        aggregatedTable.insert(
-                visitorList.stream()
-                        .map(Visitor::getValue)
-                        .collect(Collectors.toList()));
-        return aggregatedTable;
-    }
-
     private Boolean aggregateColumnToNormalColumn(List<String> columns, List<String> aggregateColumnList) throws ParseFailure {
         boolean isAggregateQuery = false;
         boolean normalColumnExist = false;
