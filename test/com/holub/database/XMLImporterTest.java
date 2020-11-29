@@ -1,5 +1,6 @@
 package com.holub.database;
 
+import com.holub.util.MapListHelper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,21 +46,21 @@ class XMLImporterTest {
 
 
     @Test
-    void loadTableName() throws IOException {
+    void loadTableName() {
         Assertions.assertEquals(importer.loadTableName(), "sampletable");
     }
 
     @Test
-    void loadWidth() throws IOException {
+    void loadWidth() {
         Assertions.assertEquals(importer.loadWidth(), 3);
     }
 
     @Test
-    void loadColumnNames() throws IOException {
+    void loadColumnNames() {
         StringBuilder sb = new StringBuilder();
-        Iterator it = importer.loadColumnNames();
+        Iterator<String> it = importer.loadColumnNames();
         while (it.hasNext()) {
-            String item = (String) it.next();
+            String item = it.next();
             sb.append(item);
             if (it.hasNext()) {
                 sb.append(",");
@@ -69,15 +70,15 @@ class XMLImporterTest {
     }
 
     @Test
-    void loadRow() throws IOException {
-        Iterator it = importer.loadRow();
-        List data = new ArrayList();
+    void loadRow() {
+        Iterator<String> it = importer.loadRow();
+        List<String> data = new ArrayList<>();
         while (it.hasNext()) {
             data.add(it.next());
         }
         Assertions.assertArrayEquals(data.toArray(), new Object[]{"sampleName", "sampleAge", "sampleMoney"});
         it = importer.loadRow();
-        data = new ArrayList();
+        data = new ArrayList<>();
         while (it.hasNext()) {
             data.add(it.next());
         }
@@ -102,6 +103,18 @@ class XMLImporterTest {
         Assertions.assertEquals(c.column("age").toString(), "sampleAge2");
         Assertions.assertEquals(c.column("money").toString(), "sampleMoney2");
 
+    }
+
+    @Test
+    void tableFactoryTest() throws IOException {
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><sampletable><column><name>name</name><name>age" +
+                "</name><name>money</name></column><data><value>sampleName</value><value>sampleAge</value><value" +
+                ">sampleValue</value></data></sampletable>";
+        Table tb = TableFactory.load("test.xml", new StringReader(xmlString));
+        MapListHelper mapListHelper = new MapListHelper();
+        mapListHelper.setColumnName("name", "age", "money");
+        mapListHelper.addRow("sampleName", "sampleAge", "sampleValue");
+        Assertions.assertTrue(mapListHelper.verify(tb));
     }
 
 }
