@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class HTMLExporterTest {
@@ -30,7 +31,7 @@ class HTMLExporterTest {
         try {
             exporter.startTable();
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
 
     }
@@ -39,9 +40,9 @@ class HTMLExporterTest {
     @DisplayName("tableName is Null")
     void storeMetadataWhenTableNameIsNull() {
         try {
-            exporter.storeMetadata(null, 0, 0, new ArrayList().iterator());
+            exporter.storeMetadata(null, 0, 0, Collections.emptyIterator());
             Assertions.assertTrue(writer.getOutput().contains("<h1>anonymous</h1>"));
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -59,13 +60,13 @@ class HTMLExporterTest {
                 "</thead>" +
                 "<tbody>";
         try {
-            List columnNames = new ArrayList();
+            List<String> columnNames = new ArrayList<>();
             columnNames.add("A");
             columnNames.add("B");
             columnNames.add("C");
             exporter.storeMetadata("SampleTable", 3, 0, columnNames.iterator());
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -77,13 +78,13 @@ class HTMLExporterTest {
                 "<td>DataC</td>" +
                 "</tr>";
         try {
-            List columnNames = new ArrayList();
+            List<String> columnNames = new ArrayList<>();
             columnNames.add("DataA");
             columnNames.add("DataB");
             columnNames.add("DataC");
             exporter.storeRow(columnNames.iterator());
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -96,7 +97,7 @@ class HTMLExporterTest {
         try {
             exporter.endTable();
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -155,7 +156,7 @@ class HTMLExporterTest {
             WriterMock w = new WriterMock();
             tb.export(new HTMLExporter(w));
             Assertions.assertEquals(resultString, w.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 }
