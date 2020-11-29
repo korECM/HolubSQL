@@ -171,3 +171,5 @@ Temporary Items
 .apdisk
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos
+!/HolubSQL.iml
+!/.idea/saveactions_settings.xml
