@@ -1,33 +1,27 @@
 package com.holub.database;
 
 import com.holub.text.ParseFailure;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import com.holub.util.MapListHelper;
+import org.junit.jupiter.api.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class OrderByQueryTest {
 
-    Database database;
-    List<Map<String, String>> expected;
+    static Database database;
+    Table result;
+    static MapListHelper mapListHelper;
 
-    @BeforeEach
-    void setUp() throws IOException, ParseFailure {
-
-        expected = new LinkedList<>();
-
+    @BeforeAll
+    static void setDatabase() throws IOException, ParseFailure {
+        mapListHelper = new MapListHelper();
         database = new Database("");
-        database.execute("CREATE TABLE school(" +
-                "name VARCHAR NOT NULL, " +
-                "year INT NOT NULL, " +
-                "isGood VARCHAR NOT NULL, " +
-                "PRIMARY KEY(name) " +
-                ")");
+        database.createTable("school", Arrays.asList("name", "year", "isGood"));
         String[] names = new String[]{"CAU", "SNU", "HYU", "SU"};
         String[] years = new String[]{"1", "3", "3", "2"};
         String[] isGoods = new String[]{"true", "false", "false", "false"};
@@ -36,13 +30,7 @@ public class OrderByQueryTest {
                     isGoods[i]));
         }
 
-        database.execute("CREATE TABLE person(" +
-                "name VARCHAR NOT NULL, " +
-                "age INT NOT NULL, " +
-                "schoolName INT NOT NULL, " +
-                "PRIMARY KEY(name) " +
-                ")");
-
+        database.createTable("person", Arrays.asList("name", "age", "schoolName"));
         names = new String[]{"A", "B", "C", "D"};
         String[] ages = new String[]{"3", "3", "3", "5"};
         String[] schoolNames = new String[]{"CAU", "HYU", "SNU", "CAU"};
@@ -53,8 +41,8 @@ public class OrderByQueryTest {
     }
 
     @AfterEach
-    void clear() {
-        expected.clear();
+    void clear(){
+        mapListHelper.clear();
     }
 
     private boolean isSorted(Cursor c, String columnName, boolean isAsc) {
@@ -63,36 +51,8 @@ public class OrderByQueryTest {
             data.add(c.column(columnName).toString());
         }
         List<String> sortedList = data.stream().sorted().collect(Collectors.toList());
-        if (isAsc == false) Collections.reverse(sortedList);
+        if (!isAsc) Collections.reverse(sortedList);
         return sortedList.equals(data);
-    }
-
-    private boolean isSorted(Cursor c, List<Map<String, String>> expected) {
-        List<Map<String, String>> data = new ArrayList<>();
-        while (c.advance()) {
-            Map<String, String> row = new LinkedHashMap<>();
-            for (int i = 0; i < c.columnCount(); i++) {
-                row.put(c.columnName(i), c.column(c.columnName(i)).toString());
-            }
-            data.add(row);
-        }
-
-        return data.equals(expected);
-    }
-
-    private void makeRow(Map<String, String> row, String[] columnNames, String[] data) {
-        assert columnNames.length == data.length : "Size Mismatch";
-
-        IntStream
-                .range(0, columnNames.length)
-                .forEach(i -> row.put(columnNames[i], data[i]));
-
-    }
-
-    private void addRow(List<Map<String, String>> expected, String[] columnNames, String[] data) {
-        Map<String, String> row = new LinkedHashMap<>();
-        makeRow(row, columnNames, data);
-        expected.add(row);
     }
 
     private boolean doesColumnExist(Cursor c, String columnName) {
@@ -103,9 +63,8 @@ public class OrderByQueryTest {
     }
 
     @Test
+    @DisplayName("column 1개에 대해 정렬 테스트")
     void orderByOneColumn() throws IOException, ParseFailure {
-        Table result;
-
         result = database.execute("SELECT name, year FROM school ORDER BY year");
         Assertions.assertTrue(isSorted(result.rows(), "year", true));
 
@@ -114,80 +73,81 @@ public class OrderByQueryTest {
     }
 
     @Test
+    @DisplayName("column 여러개에 대한 정렬 테스트")
     void orderByMultipleColumn() throws IOException, ParseFailure {
-        Table result;
+        mapListHelper.setColumnName("name", "year");
+        mapListHelper.addRow("CAU", "1");
+        mapListHelper.addRow("SU", "2");
+        mapListHelper.addRow("HYU", "3");
+        mapListHelper.addRow("SNU", "3");
 
         result = database.execute("SELECT name, year FROM school ORDER BY year, name");
 
-        addRow(expected, new String[]{"name", "year"}, new String[]{"CAU", "1"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SU", "2"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"HYU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SNU", "3"});
-
-        Assertions.assertTrue(isSorted(result.rows(), expected));
+        Assertions.assertTrue(mapListHelper.verify(result));
 
     }
 
     @Test
+    @DisplayName("여러개의 column에 대해 방향이 다르게 주어질 때 정렬 테스트")
     void orderByMultipleColumnWithMultipleDirection() throws IOException, ParseFailure {
-        Table result;
+        mapListHelper.setColumnName("name", "year");
+        mapListHelper.addRow("HYU", "3");
+        mapListHelper.addRow("SNU", "3");
+        mapListHelper.addRow("SU", "2");
+        mapListHelper.addRow("CAU", "1");
 
         result = database.execute("SELECT name, year FROM school ORDER BY year DESC, name ASC");
 
-        addRow(expected, new String[]{"name", "year"}, new String[]{"HYU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SNU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SU", "2"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"CAU", "1"});
-
-        Assertions.assertTrue(isSorted(result.rows(), expected));
+        Assertions.assertTrue(mapListHelper.verify(result));
 
     }
 
     @Test
+    @DisplayName("ORDER BY에 주어진 column이 SELECT에 없는 경우 결과 테이블에 이 column이 존재해서는 안된다")
     void orderByColumnWhichIsNotExistInSelect() throws IOException, ParseFailure {
-        Table result;
+        mapListHelper.setColumnName("name", "year");
+        mapListHelper.addRow("SNU", "3");
+        mapListHelper.addRow("HYU", "3");
+        mapListHelper.addRow("SU", "2");
+        mapListHelper.addRow("CAU", "1");
 
         result = database.execute("SELECT name, year FROM school ORDER BY isGood");
 
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SNU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"HYU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SU", "2"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"CAU", "1"});
+        Assertions.assertTrue(mapListHelper.verify(result));
+        Assertions.assertFalse(doesColumnExist(result.rows(), "isGood"));
 
-        Assertions.assertTrue(isSorted(result.rows(), expected));
-        Assertions.assertTrue(doesColumnExist(result.rows(), "isGood") == false);
+        mapListHelper.clear();
+        mapListHelper.setColumnName("name", "year");
+        mapListHelper.addRow("CAU", "1");
+        mapListHelper.addRow("SNU", "3");
+        mapListHelper.addRow("HYU", "3");
+        mapListHelper.addRow("SU", "2");
 
         result = database.execute("SELECT name, year FROM school ORDER BY isGood DESC");
 
-        expected.clear();
-        addRow(expected, new String[]{"name", "year"}, new String[]{"CAU", "1"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SNU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"HYU", "3"});
-        addRow(expected, new String[]{"name", "year"}, new String[]{"SU", "2"});
-
-        Assertions.assertTrue(isSorted(result.rows(), expected));
-        Assertions.assertTrue(doesColumnExist(result.rows(), "isGood") == false);
+        Assertions.assertTrue(mapListHelper.verify(result));
+        Assertions.assertFalse(doesColumnExist(result.rows(), "isGood"));
 
     }
 
     @Test
+    @DisplayName("SELECT *와 ORDER BY를 함께 사용할 때도 정렬이 정상적으로 되어야한다")
     void orderWithSelectAsterisk() throws IOException, ParseFailure {
-        Table result;
-
         result = database.execute("SELECT * FROM school ORDER BY year DESC");
+        System.out.println(result.toString());
         Assertions.assertTrue(isSorted(result.rows(), "year", false));
     }
 
     @Test
+    @DisplayName("JOIN과 ORDER BY를 함께 사용할 때도 정렬이 되어야 한다")
     void orderWithJoin() throws IOException, ParseFailure {
-        Table result;
         result = database.execute("SELECT * FROM person, school WHERE person.schoolName=school.name ORDER BY name " +
                 "DESC");
         Assertions.assertTrue(isSorted(result.rows(), "name", false));
     }
 
     @Test
-    void orderByWithOutColumnName() throws IOException, ParseFailure {
+    void orderByWithOutColumnName() {
         Assertions.assertThrows(ParseFailure.class, () -> database.execute("SELECT name, year FROM school ORDER BY"));
     }
 }

@@ -4,7 +4,11 @@ import java.util.*;
 
 public class TableHelper {
 
-    static List<Map<String, String>> tableToMapList(Cursor c, List<String> columns) {
+    public static List<Map<String, String>> tableToMapList(Table t){
+        return tableToMapList(t.rows(), t.columnNames());
+    }
+
+    public static List<Map<String, String>> tableToMapList(Cursor c, List<String> columns) {
         List<Map<String, String>> rows = new ArrayList<>();
         while (c.advance()) {
             Map<String, String> map = new LinkedHashMap<>();
@@ -18,7 +22,7 @@ public class TableHelper {
         return rows;
     }
 
-    static List<Map<String, String>> tableToMapList(Cursor c, String[] columns) {
+    public static List<Map<String, String>> tableToMapList(Cursor c, String[] columns) {
         return tableToMapList(c, columns == null ? null : Arrays.asList(columns));
     }
 }

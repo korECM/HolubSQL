@@ -2,25 +2,24 @@ package com.holub.database;
 
 import com.holub.text.ParseFailure;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DistinctQueryTest {
-    Database database;
+    static Database database;
+    Table result;
 
-    @BeforeEach
-    void setUp() throws IOException, ParseFailure {
+    @BeforeAll
+    static void setDatabase() throws IOException, ParseFailure {
         database = new Database("");
-        database.execute("CREATE TABLE school(" +
-                "name VARCHAR NOT NULL, " +
-                "year INT NOT NULL, " +
-                "address VARCHAR NOT NULL, " +
-                "PRIMARY KEY(name) " +
-                ")");
+        database.createTable("school", Arrays.asList("name", "year", "address"));
         String[] names = new String[]{"CAU", "SNU"};
         String[] years = new String[]{"1", "3"};
         String[] addresses = new String[]{"seoul", "seoul"};
@@ -28,13 +27,7 @@ public class DistinctQueryTest {
             database.execute(String.format("INSERT INTO school VALUES(\"%s\", \"%s\", \"%s\")", names[i], years[i],
                     addresses[i]));
         }
-
-        database.execute("CREATE TABLE person(" +
-                "name VARCHAR NOT NULL, " +
-                "age INT NOT NULL, " +
-                "schoolName INT NOT NULL, " +
-                "PRIMARY KEY(name) " +
-                ")");
+        database.createTable("person", Arrays.asList("name", "age", "schoolName"));
 
         names = new String[]{"A", "B", "C", "D"};
         String[] ages = new String[]{"3", "3", "3", "5"};
@@ -45,52 +38,42 @@ public class DistinctQueryTest {
         }
     }
 
-    // 테이블이 중복을 가지고 있을 때 판단 가능
-    // 테이블이 원래부터 중복이 없는 경우 이 함수가 false를 반환한다고 해도
-    // DISTINCT에 의해 걸러진 것인지, 원래부터 중복이 없었는지 판단 불가능
-    private Boolean hasTableDistinctRow(Table result) {
-        HashSet<String> hashSet = new HashSet<>();
+    /**
+     * 테이블이 중복된 항을 가지고 있는지 검사해서 반환
+     *
+     * @param result 검사하고자 하는 테이블
+     * @return 중복이 존재하면 true
+     */
+    private Boolean verifyDuplicateTermExist(Table result) {
+        List<Map<String, String>> tableMap = TableHelper.tableToMapList(result);
 
-        Cursor c = result.rows();
-        int rowCount = 0;
-        while (c.advance()) {
-            rowCount++;
-            StringBuilder sb = new StringBuilder();
-            Iterator it = c.columns();
-            while (it.hasNext()) {
-                sb.append(it.next().toString());
-            }
-            hashSet.add(sb.toString());
-        }
-
-        return hashSet.size() != rowCount;
+        return !tableMap.stream().distinct().collect(Collectors.toList()).equals(tableMap);
     }
 
     @Test
+    @DisplayName("DISTINCT 키워드를 사용하면 중복된 항을 제거해야만 한다")
     void distinctTestWithOutJoin() throws IOException, ParseFailure {
-        Table result;
         result = database.execute("SELECT age, schoolName FROM person");
-        Assertions.assertTrue(hasTableDistinctRow(result));
+        Assertions.assertTrue(verifyDuplicateTermExist(result));
 
 
         result = database.execute("SELECT DISTINCT age, schoolName FROM person");
-        System.out.println(result.toString());
-        Assertions.assertTrue(hasTableDistinctRow(result) == false);
+        Assertions.assertFalse(verifyDuplicateTermExist(result));
     }
 
     @Test
+    @DisplayName("DISTINCT 키워드를 JOIN과 함께 사용해도 작동해야 한다")
     void distinctTestWithJoin() throws IOException, ParseFailure {
-        Table result;
         result = database.execute("SELECT age, schoolName, address FROM person, school WHERE person.schoolName " +
                 "= " +
                 "school.name");
-        Assertions.assertTrue(hasTableDistinctRow(result));
+        Assertions.assertTrue(verifyDuplicateTermExist(result));
 
 
         result = database.execute("SELECT DISTINCT age, schoolName, address FROM person, school WHERE person" +
                 ".schoolName = " +
                 "school.name");
-        Assertions.assertTrue(hasTableDistinctRow(result) == false);
+        Assertions.assertFalse(verifyDuplicateTermExist(result));
     }
 
 }

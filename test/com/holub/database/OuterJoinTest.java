@@ -1,40 +1,34 @@
 package com.holub.database;
 
 import com.holub.text.ParseFailure;
+import com.holub.util.MapListHelper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.Arrays;
 
 public class OuterJoinTest {
 
-    Database database;
-    List<Map<String, String>> expected;
+    static Database database;
     Table result;
+    static MapListHelper mapListHelper;
 
-    @BeforeEach
-    void setUp() throws IOException, ParseFailure {
-
-        expected = new LinkedList<>();
+    @BeforeAll
+    static void setDatabase() throws IOException, ParseFailure {
+        mapListHelper = new MapListHelper();
 
         database = new Database("");
-        database.execute("CREATE TABLE test1(" +
-                "name INT NOT NULL," +
-                "b INT NOT NULL" +
-                ")");
+        database.createTable("test1", Arrays.asList("name", "b"));
         String[] names = new String[]{"1", "2", "3", "4"};
         String[] b = new String[]{"1", "3", "2", "5"};
         for (int i = 0; i < 4; i++) {
             database.execute(String.format("INSERT INTO test1 VALUES(\"%s\", \"%s\")", names[i], b[i]));
         }
 
-        database.execute("CREATE TABLE test2(" +
-                "a INT NOT NULL," +
-                "d INT NOT NULL" +
-                ")");
+        database.createTable("test2", Arrays.asList("a", "d"));
         names = new String[]{"1", "2", "3", "4"};
         b = new String[]{"b-1", "b-2", "b-3", "b-4"};
         for (int i = 0; i < 4; i++) {
@@ -43,70 +37,54 @@ public class OuterJoinTest {
 
     }
 
-    private boolean equals(Cursor c, List<Map<String, String>> expected) {
-        List<Map<String, String>> data = new ArrayList<>();
-        while (c.advance()) {
-            Map<String, String> row = new LinkedHashMap<>();
-            for (int i = 0; i < c.columnCount(); i++) {
-                row.put(c.columnName(i), c.column(c.columnName(i)).toString());
-            }
-            data.add(row);
-        }
-
-        return data.equals(expected);
-    }
-
-    private void makeRow(Map<String, String> row, String[] columnNames, String[] data) {
-        assert columnNames.length == data.length : "Size Mismatch";
-
-        IntStream
-                .range(0, columnNames.length)
-                .forEach(i -> row.put(columnNames[i], data[i]));
-
-    }
-
-    private void addRow(List<Map<String, String>> expected, String[] columnNames, String[] data) {
-        Map<String, String> row = new LinkedHashMap<>();
-        makeRow(row, columnNames, data);
-        expected.add(row);
+    @AfterEach
+    void clear(){
+        mapListHelper.clear();
     }
 
     @Test
     void leftOuterJoinTest() throws IOException, ParseFailure {
-        result = database.execute("SELECT * FROM test1 LEFT OUTER JOIN test2 ON test1.b = test2.a");
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"1", "1", "1", "b-1"});
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"2", "3", "3", "b-3"});
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"3", "2", "2", "b-2"});
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"4", "5", "null", "null"});
-        Assertions.assertTrue(equals(result.rows(), expected));
+        mapListHelper.setColumnName("name", "b", "a", "d");
+        mapListHelper.addRow("1", "1", "1", "b-1");
+        mapListHelper.addRow("2", "3", "3", "b-3");
+        mapListHelper.addRow("3", "2", "2", "b-2");
+        mapListHelper.addRow("4", "5", "null", "null");
 
-        expected.clear();
+        result = database.execute("SELECT * FROM test1 LEFT OUTER JOIN test2 ON test1.b = test2.a");
+
+        Assertions.assertTrue(mapListHelper.verify(result));
+        mapListHelper.clear();
+
+        mapListHelper.setColumnName("name", "a");
+        mapListHelper.addRow("1", "1");
+        mapListHelper.addRow("2", "3");
+        mapListHelper.addRow("3", "2");
+        mapListHelper.addRow("4", "null");
 
         result = database.execute("SELECT name, a FROM test1 LEFT OUTER JOIN test2 ON test1.b = test2.a");
-        addRow(expected, new String[]{"name", "a"}, new String[]{"1", "1"});
-        addRow(expected, new String[]{"name", "a"}, new String[]{"2", "3"});
-        addRow(expected, new String[]{"name", "a"}, new String[]{"3", "2"});
-        addRow(expected, new String[]{"name", "a"}, new String[]{"4", "null"});
-        Assertions.assertTrue(equals(result.rows(), expected));
+        Assertions.assertTrue(mapListHelper.verify(result));
     }
 
     @Test
     void rightOuterJoinTest() throws IOException, ParseFailure {
-        result = database.execute("SELECT * FROM test1 RIGHT OUTER JOIN test2 ON test1.b = test2.a");
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"1", "1", "1", "b-1"});
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"2", "3", "3", "b-3"});
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"3", "2", "2", "b-2"});
-        addRow(expected, new String[]{"name", "b", "a", "d"}, new String[]{"null", "null", "4", "b-4"});
-        Assertions.assertTrue(equals(result.rows(), expected));
+        mapListHelper.setColumnName("name", "b", "a", "d");
+        mapListHelper.addRow("1", "1", "1", "b-1");
+        mapListHelper.addRow("2", "3", "3", "b-3");
+        mapListHelper.addRow("3", "2", "2", "b-2");
+        mapListHelper.addRow("null", "null", "4", "b-4");
 
-        expected.clear();
+        result = database.execute("SELECT * FROM test1 RIGHT OUTER JOIN test2 ON test1.b = test2.a");
+        Assertions.assertTrue(mapListHelper.verify(result));
+        mapListHelper.clear();
+
+        mapListHelper.setColumnName("name", "a");
+        mapListHelper.addRow("1", "1");
+        mapListHelper.addRow("2", "3");
+        mapListHelper.addRow("3", "2");
+        mapListHelper.addRow("null", "4");
 
         result = database.execute("SELECT name, a FROM test1 RIGHT OUTER JOIN test2 ON test1.b = test2.a");
-        addRow(expected, new String[]{"name", "a"}, new String[]{"1", "1"});
-        addRow(expected, new String[]{"name", "a"}, new String[]{"2", "3"});
-        addRow(expected, new String[]{"name", "a"}, new String[]{"3", "2"});
-        addRow(expected, new String[]{"name", "a"}, new String[]{"null", "4"});
-        Assertions.assertTrue(equals(result.rows(), expected));
+        Assertions.assertTrue(mapListHelper.verify(result));
     }
 
     @Test
