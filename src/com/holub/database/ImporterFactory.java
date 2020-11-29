@@ -5,7 +5,7 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
+import java.util.stream.Collectors;
 
 
 public class ImporterFactory {
@@ -28,7 +28,11 @@ public class ImporterFactory {
         public NullImporter(Reader in) throws IOException {
             throw new java.io.IOException(
                     "Filename does not end in "
-                            + "supported extension (.csv, .xml)");
+                            + "supported extension (" +
+                            importers.keySet().stream()
+                                    .map((key) -> "." + key)
+                                    .collect(Collectors.joining(","))
+                            + ")");
         }
 
         public void startTable() {
