@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class XMLExporterTest {
@@ -27,7 +28,7 @@ class XMLExporterTest {
         try {
             exporter.startTable();
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -41,13 +42,13 @@ class XMLExporterTest {
                 "<name>money</name>" +
                 "</column>";
         try {
-            List columnNames = new ArrayList<String>();
+            List<String> columnNames = new ArrayList<>();
             columnNames.add("name");
             columnNames.add("age");
             columnNames.add("money");
             exporter.storeMetadata(null, 3, 0, columnNames.iterator());
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -61,13 +62,13 @@ class XMLExporterTest {
                 "<name>money</name>" +
                 "</column>";
         try {
-            List columnNames = new ArrayList<String>();
+            List<String> columnNames = new ArrayList<>();
             columnNames.add("name");
             columnNames.add("age");
             columnNames.add("money");
             exporter.storeMetadata("sampletable", 3, 0, columnNames.iterator());
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -78,14 +79,14 @@ class XMLExporterTest {
                 "<value>sampleAge</value>" +
                 "<value>sampleMoney</value>" +
                 "</data>";
-        List data = new ArrayList();
+        List<String> data = new ArrayList<>();
         data.add("sampleName");
         data.add("sampleAge");
         data.add("sampleMoney");
         try {
             exporter.storeRow(data.iterator());
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -94,11 +95,10 @@ class XMLExporterTest {
     void endTableWhenTableNameIsNull() {
         String resultString = "</anonymous>";
         try {
-            List columnNames = new ArrayList<String>();
-            exporter.storeMetadata(null, 0, 0, columnNames.iterator());
+            exporter.storeMetadata(null, 0, 0, Collections.emptyIterator());
             exporter.endTable();
             Assertions.assertTrue(writer.getOutput().contains(resultString));
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -107,11 +107,10 @@ class XMLExporterTest {
     void endTableWhenTableNameIsNotNull() {
         String resultString = "</sampletable>";
         try {
-            List columnNames = new ArrayList<String>();
-            exporter.storeMetadata("sampletable", 0, 0, columnNames.iterator());
+            exporter.storeMetadata("sampletable", 0, 0, Collections.emptyIterator());
             exporter.endTable();
             Assertions.assertTrue(writer.getOutput().contains(resultString));
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -136,7 +135,7 @@ class XMLExporterTest {
             sampleTable.insert(new Object[]{"sampleName", "sampleAge", "sampleValue"});
             sampleTable.export(new XMLExporter(writer));
             Assertions.assertEquals(resultString, writer.getOutput());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 }
