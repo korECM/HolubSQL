@@ -19,7 +19,7 @@ public class XMLExporter implements Table.Exporter {
     }
 
     @Override
-    public void storeMetadata(String tableName, int width, int height, Iterator columnNames) throws IOException {
+    public void storeMetadata(String tableName, int width, int height, Iterator<String> columnNames) throws IOException {
         this.tableName = tableName;
         out.write(String.format("<%s>", tableName == null ? "anonymous" : tableName));
         out.write("<column>");
@@ -30,7 +30,7 @@ public class XMLExporter implements Table.Exporter {
     }
 
     @Override
-    public void storeRow(Iterator data) throws IOException {
+    public void storeRow(Iterator<String> data) throws IOException {
         out.write("<data>");
         while (data.hasNext()) {
             out.write(String.format("<value>%s</value>", data.next()));

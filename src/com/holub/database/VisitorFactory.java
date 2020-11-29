@@ -61,7 +61,7 @@ class EmptyVisitor extends Visitor {
 
 public class VisitorFactory {
 
-    private static Pattern aggregatePattern = Pattern.compile("(min|max|avg)\\(([a-zA-Z_0-9/\\\\:~]+)\\)");
+    private static final Pattern aggregatePattern = Pattern.compile("(min|max|avg)\\(([a-zA-Z_0-9/\\\\:~]+)\\)");
 
     private VisitorFactory() {
     }

@@ -20,13 +20,11 @@ import java.util.List;
 public class XMLImporter implements Table.Importer {
 
     private final BufferedReader in;
-    private final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
     private final DocumentBuilder dBuilder;
-    private Document doc = null;
 
     private String tableName;
-    private List columnName = new ArrayList<String>();
-    private List dataNodeList = new ArrayList<NodeList>();
+    private final List<String > columnName = new ArrayList<>();
+    private final List<NodeList > dataNodeList = new ArrayList<>();
     private Iterator<NodeList> dataNodeListIterator;
 
     public XMLImporter(Reader in) {
@@ -35,6 +33,7 @@ public class XMLImporter implements Table.Importer {
                 : new BufferedReader(in)
         ;
         try {
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             dBuilder = dbFactory.newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new Error("Can not Initialize DocumentBuilder");
@@ -49,7 +48,7 @@ public class XMLImporter implements Table.Importer {
             sb.append(line);
         }
         try {
-            doc = dBuilder.parse(new ByteArrayInputStream(sb.toString().getBytes()));
+            Document doc = dBuilder.parse(new ByteArrayInputStream(sb.toString().getBytes()));
             Element root = doc.getDocumentElement();
             tableName = root.getTagName();
 
@@ -58,15 +57,15 @@ public class XMLImporter implements Table.Importer {
                 Node node = children.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     String nodeName = node.getNodeName();
-                    if (nodeName == "column") {
+                    if (nodeName.equals("column")) {
                         NodeList dataList = node.getChildNodes();
                         for (int j = 0; j < dataList.getLength(); j++) {
                             Node valueNode = dataList.item(j);
-                            if (valueNode.getNodeName() == "name") {
+                            if (valueNode.getNodeName().equals("name")) {
                                 columnName.add(valueNode.getTextContent());
                             }
                         }
-                    } else if (nodeName == "data") {
+                    } else if (nodeName.equals("data")) {
                         NodeList dataList = node.getChildNodes();
                         if (dataList.getLength() > 0) dataNodeList.add(dataList);
                     }
@@ -80,24 +79,24 @@ public class XMLImporter implements Table.Importer {
     }
 
     @Override
-    public String loadTableName() throws IOException {
+    public String loadTableName() {
         return tableName;
     }
 
     @Override
-    public int loadWidth() throws IOException {
+    public int loadWidth() {
         return columnName.size();
     }
 
     @Override
-    public Iterator loadColumnNames() throws IOException {
+    public Iterator<String> loadColumnNames() {
         return columnName.iterator();
     }
 
     @Override
-    public Iterator loadRow() throws IOException {
-        if (dataNodeListIterator == null || dataNodeListIterator.hasNext() == false) return null;
-        List row = new ArrayList();
+    public Iterator<String> loadRow() {
+        if (dataNodeListIterator == null || !dataNodeListIterator.hasNext()) return null;
+        List<String> row = new ArrayList<>();
         if (dataNodeListIterator.hasNext()) {
             NodeList dataList = dataNodeListIterator.next();
             for (int i = 0; i < dataList.getLength(); i++) {
@@ -109,7 +108,7 @@ public class XMLImporter implements Table.Importer {
     }
 
     @Override
-    public void endTable() throws IOException {
+    public void endTable() {
 
     }
 }

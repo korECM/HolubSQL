@@ -5,9 +5,9 @@ import java.util.regex.Pattern;
 public abstract class Visitor {
 
     private Double value = null;
-    private String name;
+    private final String name;
     protected int columnCount = 0;
-    private Pattern numberPattern = Pattern.compile("-?\\d+(\\.\\d+)?$");
+    private final Pattern numberPattern = Pattern.compile("-?\\d+(\\.\\d+)?$");
 
     public Visitor(String columnName) {
         this.name = columnName;
@@ -25,7 +25,7 @@ public abstract class Visitor {
     abstract Double processValue(Double orgValue, Double newValue);
 
     // 문자열을 데이터로 바꾸는 함수
-    final private Double columnToDouble(Cursor c) {
+    private Double columnToDouble(Cursor c) {
         String data = c.column(name).toString();
         if (numberPattern.matcher(data).matches()) {
             // 숫자인 경우

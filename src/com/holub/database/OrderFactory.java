@@ -1,6 +1,9 @@
 package com.holub.database;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 // 주어진 column 값 비교를 할 수 있는 인터페이스
@@ -28,7 +31,7 @@ class BooleanOrder implements OrderStrategy {
 
 class NumberOrder implements OrderStrategy {
 
-    private Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
+    private final Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
     @Override
     public boolean canHandle(String column) {
@@ -61,7 +64,7 @@ class StringOrder implements OrderStrategy {
 public class OrderFactory {
 
     // 순서를 판단하는 Responsibility를 가진 객체들의 Chain
-    private static List<OrderStrategy> orderStrategyList = new ArrayList<>();
+    private static final List<OrderStrategy> orderStrategyList = new ArrayList<>();
 
     static {
         orderStrategyList.add(new BooleanOrder());
@@ -84,27 +87,19 @@ public class OrderFactory {
 
     // 주어진 Order에 맞는 Comparator를 반환하는 함수
     static public Comparator<Map<String, String>> getOrderComparator(List<Order> orderColumn) {
-        return new Comparator<Map<String, String>>() {
-            @Override
-            public int compare(Map<String, String> o1, Map<String, String> o2) {
-                Iterator<Order> it = orderColumn.iterator();
-                while (it.hasNext()) {
-                    Order order = it.next();
-                    String column1 = o1.get(order.columnName);
-                    String column2 = o2.get(order.columnName);
-                    if (column1.equals(column2)) continue;
+        return (o1, o2) -> {
+            for (Order order : orderColumn) {
+                String column1 = o1.get(order.columnName);
+                String column2 = o2.get(order.columnName);
+                if (column1.equals(column2)) continue;
 
-                    Iterator<OrderStrategy> chain = orderStrategyList.iterator();
-
-                    while (chain.hasNext()) {
-                        OrderStrategy strategy = chain.next();
-                        if (strategy.canHandle(column1) && strategy.canHandle(column2))
-                            return strategy.compare(column1, column2) * orderDirectionToNumber(order);
-                    }
+                for (OrderStrategy strategy : orderStrategyList) {
+                    if (strategy.canHandle(column1) && strategy.canHandle(column2))
+                        return strategy.compare(column1, column2) * orderDirectionToNumber(order);
                 }
-                // 주어진 모든 조건에 대해 두 값이 같은 경우 같은 row라고 간주
-                return 0;
             }
+            // 주어진 모든 조건에 대해 두 값이 같은 경우 같은 row라고 간주
+            return 0;
         };
     }
 

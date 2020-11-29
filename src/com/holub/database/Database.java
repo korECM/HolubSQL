@@ -283,7 +283,7 @@ public final class Database {    /* The directory that represents the database.
      * with the transaction-processing system.
      */
 
-    private final Map tables = new TableMap(new HashMap());
+    private final Map<String, Table> tables = new TableMap(new HashMap<>());
 
     private final List<String> tempTableNameList = new ArrayList<>();
 
@@ -297,10 +297,10 @@ public final class Database {    /* The directory that represents the database.
      * A Map proxy that hanldes lazy instatiation of tables
      * from the disk.
      */
-    private final class TableMap implements Map {
-        private final Map realMap;
+    private final class TableMap implements Map<String, Table> {
+        private final Map<String, Table> realMap;
 
-        public TableMap(Map realMap) {
+        public TableMap(Map<String, Table> realMap) {
             this.realMap = realMap;
         }
 
@@ -308,10 +308,10 @@ public final class Database {    /* The directory that represents the database.
          * If the requested table is already in memory, return it.
          * Otherwise load it from the disk.
          */
-        public Object get(Object key) {
+        public Table get(Object key) {
             String tableName = (String) key;
             try {
-                Table desiredTable = (Table) realMap.get(tableName);
+                Table desiredTable = realMap.get(tableName);
                 if (desiredTable == null) {
                     desiredTable = TableFactory.load(
                             tableName + ".csv", location);
@@ -333,12 +333,12 @@ public final class Database {    /* The directory that represents the database.
             }
         }
 
-        public Object put(Object key, Object value) {    // If transactions are active, put the new
+        public Table put(String key, Table value) {    // If transactions are active, put the new
             // table into the same transaction state
             // as the other tables.
 
             for (int i = 0; i < transactionLevel; ++i)
-                ((Table) value).begin();
+                value.begin();
 
             return realMap.put(key, value);
         }
@@ -355,7 +355,7 @@ public final class Database {    /* The directory that represents the database.
             return realMap.isEmpty();
         }
 
-        public Object remove(Object k) {
+        public Table remove(Object k) {
             return realMap.remove(k);
         }
 
@@ -363,15 +363,15 @@ public final class Database {    /* The directory that represents the database.
             realMap.clear();
         }
 
-        public Set keySet() {
+        public Set<String> keySet() {
             return realMap.keySet();
         }
 
-        public Collection values() {
+        public Collection<Table> values() {
             return realMap.values();
         }
 
-        public Set entrySet() {
+        public Set<Entry<String, Table>> entrySet() {
             return realMap.entrySet();
         }
 
@@ -544,8 +544,7 @@ public final class Database {    /* The directory that represents the database.
      */
     public Database(File path, Table[] database) throws IOException {
         useDatabase(path);
-        for (int i = 0; i < database.length; ++i)
-            tables.put(database[i].name(), database[i]);
+        for (Table table : database) tables.put(table.name(), table);
     }
 
     //--------------------------------------------------------------
@@ -556,7 +555,7 @@ public final class Database {    /* The directory that represents the database.
      * that highlights the current input position.
      */
     private void error(String message) throws ParseFailure {
-        throw in.failure(message.toString());
+        throw in.failure(message);
     }
 
     /**
@@ -611,11 +610,10 @@ public final class Database {    /* The directory that represents the database.
      * Create a new table. If a table by this name exists, it's
      * overwritten.
      */
-    public void createTable(String name, List columns) {
+    public void createTable(String name, List<String> columns) {
         String[] columnNames = new String[columns.size()];
         int i = 0;
-        for (Iterator names = columns.iterator(); names.hasNext(); )
-            columnNames[i++] = (String) names.next();
+        for (String column : columns) columnNames[i++] = column;
 
         Table newTable = TableFactory.create(name, columnNames);
         tables.put(name, newTable);
@@ -644,10 +642,9 @@ public final class Database {    /* The directory that represents the database.
      * is the table name with a ".csv" extension added.
      */
     public void dump() throws IOException {
-        Collection values = tables.values();
+        Collection<Table> values = tables.values();
         if (values != null) {
-            for (Iterator i = values.iterator(); i.hasNext(); ) {
-                Table current = (Table) i.next();
+            for (Table current : values) {
                 if (current.isDirty()) {
                     Writer out =
                             new FileWriter(
@@ -678,9 +675,8 @@ public final class Database {    /* The directory that represents the database.
     public void begin() {
         ++transactionLevel;
 
-        Collection currentTables = tables.values();
-        for (Iterator i = currentTables.iterator(); i.hasNext(); )
-            ((Table) i.next()).begin();
+        Collection<Table> currentTables = tables.values();
+        for (Table currentTable : currentTables) currentTable.begin();
     }
 
     /**
@@ -693,9 +689,8 @@ public final class Database {    /* The directory that represents the database.
         --transactionLevel;
 
         try {
-            Collection currentTables = tables.values();
-            for (Iterator i = currentTables.iterator(); i.hasNext(); )
-                ((Table) i.next()).commit(Table.THIS_LEVEL);
+            Collection<Table> currentTables = tables.values();
+            for (Table currentTable : currentTables) currentTable.commit(Table.THIS_LEVEL);
         } catch (NoSuchElementException e) {
             verify(false, "No BEGIN to match COMMIT");
         }
@@ -710,10 +705,9 @@ public final class Database {    /* The directory that represents the database.
         assert transactionLevel > 0 : "No begin() for commit()";
         --transactionLevel;
         try {
-            Collection currentTables = tables.values();
+            Collection<Table> currentTables = tables.values();
 
-            for (Iterator i = currentTables.iterator(); i.hasNext(); )
-                ((Table) i.next()).rollback(Table.THIS_LEVEL);
+            for (Table currentTable : currentTables) currentTable.rollback(Table.THIS_LEVEL);
         } catch (NoSuchElementException e) {
             verify(false, "No BEGIN to match ROLLBACK");
         }
@@ -831,7 +825,8 @@ public final class Database {    /* The directory that represents the database.
             in.required(INTO);
             String tableName = in.required(IDENTIFIER);
 
-            List columns = null, values = null;
+            List<String> columns = null;
+            List<Expression> values = null;
 
             if (in.matchAdvance(LP) != null) {
                 columns = idList();
@@ -936,10 +931,10 @@ public final class Database {    /* The directory that represents the database.
         return in.matchAdvance(DESC) == null;
     }
 
-    private List selectIdList() throws ParseFailure {
-        List identifiers = null;
+    private List<String> selectIdList() throws ParseFailure {
+        List<String> identifiers = null;
         if (in.matchAdvance(STAR) == null) {
-            identifiers = new ArrayList();
+            identifiers = new ArrayList<>();
             String id;
             while (true) {
                 if (in.match(SELECTIDENTIFIER)) {
@@ -1078,10 +1073,10 @@ public final class Database {    /* The directory that represents the database.
     // Return a Collection holding the list of columns
     // or null if a * was found.
 
-    private List idList() throws ParseFailure {
-        List identifiers = null;
+    private List<String> idList() throws ParseFailure {
+        List<String> identifiers = null;
         if (in.matchAdvance(STAR) == null) {
-            identifiers = new ArrayList();
+            identifiers = new ArrayList<>();
             String id;
             while ((id = in.required(IDENTIFIER)) != null) {
                 identifiers.add(id);
@@ -1102,8 +1097,8 @@ public final class Database {    /* The directory that represents the database.
     //				 |	 NUMERIC [ LP expr COMMA expr RP	]
     //				 |	 DATE			// format spec is part of token
 
-    private List declarations() throws ParseFailure {
-        List identifiers = new ArrayList();
+    private List<String> declarations() throws ParseFailure {
+        List<String> identifiers = new ArrayList<>();
 
         String id;
         while (true) {
@@ -1133,7 +1128,7 @@ public final class Database {    /* The directory that represents the database.
                         in.required(RP);
                     }
                 } else if (in.matchAdvance(DATE) != null) {
-                    ; // do nothing
+                     // do nothing
                 }
 
                 in.matchAdvance(NOT);
@@ -1151,8 +1146,8 @@ public final class Database {    /* The directory that represents the database.
     // exprList'		::= COMMA expr exprList'
     // 					|	e
 
-    private List exprList() throws ParseFailure {
-        List expressions = new LinkedList();
+    private List<Expression> exprList() throws ParseFailure {
+        List<Expression> expressions = new LinkedList<>();
 
         expressions.add(expr());
         while (in.matchAdvance(COMMA) != null) {
@@ -1548,8 +1543,6 @@ public final class Database {    /* The directory that represents the database.
         public String toString() {
             return String.valueOf(value);
         }
-
-        ;
     }
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1621,16 +1614,16 @@ public final class Database {    /* The directory that represents the database.
             if (tableName == null)
                 content = participants[0].column(columnName);
             else {
-                Table container = (Table) tables.get(tableName);
+                Table container = tables.get(tableName);
 
                 // Search for the table whose name matches
                 // the one to the left of the dot, then extract
                 // the desired column from that table.
 
                 content = null;
-                for (int i = 0; i < participants.length; ++i) {
-                    if (participants[i].isTraversing(container)) {
-                        content = participants[i].column(columnName);
+                for (Cursor participant : participants) {
+                    if (participant.isTraversing(container)) {
+                        content = participant.column(columnName);
                         break;
                     }
                 }
@@ -1654,8 +1647,8 @@ public final class Database {    /* The directory that represents the database.
             String s = toString(participants);
             try {
                 return (s == null)
-                        ? (Value) new NullValue()
-                        : (Value) new NumericValue(s)
+                        ? new NullValue()
+                        : new NumericValue(s)
                         ;
             } catch (java.text.ParseException e) {    // The NumericValue constructor failed, so it must be
                 // a string. Fall through to the return-a-string case.
@@ -1669,12 +1662,12 @@ public final class Database {    /* The directory that represents the database.
     //======================================================================
     // Workhorse methods called from the parser.
     //
-    private Table doSelect(List columns, String into,
-                           List requestedTableNames,
+    private Table doSelect(List<String> columns, String into,
+                           List<String> requestedTableNames,
                            final Expression where, TableHandler[] handlers)
             throws ParseFailure {
 
-        Iterator tableNames = requestedTableNames.iterator();
+        Iterator<String> tableNames = requestedTableNames.iterator();
 
         assert tableNames.hasNext() : "No tables to use in select!";
 
@@ -1684,11 +1677,11 @@ public final class Database {    /* The directory that represents the database.
         // table names; use these names to get the actual Table
         // objects.
 
-        Table primary = (Table) tables.get((String) tableNames.next());
+        Table primary = tables.get(tableNames.next());
 
-        List participantsInJoin = new ArrayList();
+        List<Table> participantsInJoin = new ArrayList();
         while (tableNames.hasNext()) {
-            String participant = (String) tableNames.next();
+            String participant = tableNames.next();
             participantsInJoin.add(tables.get(participant));
         }
 
@@ -1730,13 +1723,13 @@ public final class Database {    /* The directory that represents the database.
     }
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    private int doInsert(String tableName, List columns, List values)
+    private int doInsert(String tableName, List<String> columns, List values)
             throws ParseFailure {
-        List processedValues = new LinkedList();
-        Table t = (Table) tables.get(tableName);
+        List<String> processedValues = new LinkedList<>();
+        Table t = tables.get(tableName);
 
-        for (Iterator i = values.iterator(); i.hasNext(); ) {
-            Expression current = (Expression) i.next();
+        for (Object value : values) {
+            Expression current = (Expression) value;
             processedValues.add(
                     current.evaluate(null).toString());
         }
@@ -1755,7 +1748,7 @@ public final class Database {    /* The directory that represents the database.
     private int doUpdate(String tableName, final String columnName,
                          final Expression value, final Expression where)
             throws ParseFailure {
-        Table t = (Table) tables.get(tableName);
+        Table t = tables.get(tableName);
         try {
             return t.update
                     (new Selector() {
@@ -1790,7 +1783,7 @@ public final class Database {    /* The directory that represents the database.
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     private int doDelete(String tableName, final Expression where)
             throws ParseFailure {
-        Table t = (Table) tables.get(tableName);
+        Table t = tables.get(tableName);
         try {
             return t.delete
                     (new Selector.Adapter() {

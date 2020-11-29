@@ -62,21 +62,21 @@ import java.util.*;
     // Be sure to change the clone() method if you modify anything about
     // any of these fields.
 
-    private LinkedList rowSet = new LinkedList();
+    private LinkedList<Object> rowSet = new LinkedList<>();
     private String[] columnNames;
     private String tableName;
 
     private transient boolean isDirty = false;
-    private transient LinkedList transactionStack = new LinkedList();
+    private final transient LinkedList<LinkedList<Undo>> transactionStack = new LinkedList<>();
 
     /**********************************************************************
      *  Create a table with the given name and columns.
      *  @param tableName the name of the table.
-     *  @param an array of Strings that specify the column names.
+     *  @param columnNames array of Strings that specify the column names.
      */
     public ConcreteTable(String tableName, String[] columnNames) {
         this.tableName = tableName;
-        this.columnNames = (String[]) columnNames.clone();
+        this.columnNames = columnNames.clone();
     }
 
     /**********************************************************************
@@ -103,11 +103,11 @@ import java.util.*;
 
         tableName = importer.loadTableName();
         int width = importer.loadWidth();
-        Iterator columns = importer.loadColumnNames();
+        Iterator<String> columns = importer.loadColumnNames();
 
         this.columnNames = new String[width];
         for (int i = 0; columns.hasNext(); )
-            columnNames[i++] = (String) columns.next();
+            columnNames[i++] = columns.next();
 
         while ((columns = importer.loadRow()) != null) {
             Object[] current = new Object[width];
@@ -126,8 +126,7 @@ import java.util.*;
                 rowSet.size(),
                 new ArrayIterator(columnNames));
 
-        for (Iterator i = rowSet.iterator(); i.hasNext(); )
-            exporter.storeRow(new ArrayIterator((Object[]) i.next()));
+        for (Object o : rowSet) exporter.storeRow(new ArrayIterator((Object[]) o));
 
         exporter.endTable();
         isDirty = false;
@@ -152,7 +151,7 @@ import java.util.*;
     }
 
     //----------------------------------------------------------------------
-    public int insert(Collection intoTheseColumns, Collection values) {
+    public int insert(Collection<String> intoTheseColumns, Collection values) {
         assert (intoTheseColumns.size() == values.size())
                 : "There must be exactly one value for "
                 + "each specified column";
@@ -160,16 +159,16 @@ import java.util.*;
         Object[] newRow = new Object[width()];
 
         Iterator v = values.iterator();
-        Iterator c = intoTheseColumns.iterator();
+        Iterator<String> c = intoTheseColumns.iterator();
         while (c.hasNext() && v.hasNext())
-            newRow[indexOf((String) c.next())] = v.next();
+            newRow[indexOf(c.next())] = v.next();
 
         doInsert(newRow);
         return 1;
     }
 
     //----------------------------------------------------------------------
-    public int insert(Map row) {    // A map is considered to be "ordered,"  with the order defined
+    public int insert(Map<String, Object> row) {    // A map is considered to be "ordered,"  with the order defined
         // as the order in which an iterator across a "view" returns
         // values. My reading of this statement is that the iterator
         // across the keySet() visits keys in the same order as the
@@ -184,7 +183,7 @@ import java.util.*;
                 : "Values-array length (" + values.length + ") "
                 + "is not the same as table width (" + width() + ")";
 
-        doInsert((Object[]) values.clone());
+        doInsert(values.clone());
         return 1;
     }
 
@@ -210,7 +209,7 @@ import java.util.*;
 
     //----------------------------------------------------------------------
     private final class Results implements Cursor {
-        private final Iterator rowIterator = rowSet.iterator();
+        private final Iterator<Object> rowIterator = rowSet.iterator();
         private Object[] row = null;
 
         public String tableName() {
@@ -248,7 +247,7 @@ import java.util.*;
         // This method is for use by the outer class only, and is not part
         // of the Cursor interface.
         private Object[] cloneRow() {
-            return (Object[]) (row.clone());
+            return row.clone();
         }
 
         public Object update(String columnName, Object newValue) {
@@ -334,12 +333,12 @@ import java.util.*;
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     public void begin() {
-        transactionStack.addLast(new LinkedList());
+        transactionStack.addLast(new LinkedList<>());
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     private void register(Undo op) {
-        ((LinkedList) transactionStack.getLast()).addLast(op);
+        transactionStack.getLast().addLast(op);
     }
 
     private void registerUpdate(Object[] row, int cell, Object oldContents) {
@@ -362,11 +361,11 @@ import java.util.*;
         if (transactionStack.isEmpty())
             throw new IllegalStateException("No BEGIN for COMMIT");
         do {
-            LinkedList currentLevel =
-                    (LinkedList) transactionStack.removeLast();
+            LinkedList<Undo> currentLevel =
+                    transactionStack.removeLast();
 
             if (!transactionStack.isEmpty())
-                ((LinkedList) transactionStack.getLast())
+                transactionStack.getLast()
                         .addAll(currentLevel);
 
         } while (all && !transactionStack.isEmpty());
@@ -377,11 +376,11 @@ import java.util.*;
         if (transactionStack.isEmpty())
             throw new IllegalStateException("No BEGIN for ROLLBACK");
         do {
-            LinkedList currentLevel =
-                    (LinkedList) transactionStack.removeLast();
+            LinkedList<Undo> currentLevel =
+                    transactionStack.removeLast();
 
             while (!currentLevel.isEmpty())
-                ((Undo) currentLevel.removeLast()).execute();
+                currentLevel.removeLast().execute();
 
         } while (all && !transactionStack.isEmpty());
     }
@@ -424,14 +423,14 @@ import java.util.*;
     //----------------------------------------------------------------------
     public Table select(Selector where) {
         Table resultTable = new ConcreteTable(null,
-                (String[]) columnNames.clone());
+                columnNames.clone());
 
         Results currentRow = (Results) rows();
         Cursor[] envelope = new Cursor[]{currentRow};
 
         while (currentRow.advance()) {
             if (where.approve(envelope))
-                resultTable.insert((Object[]) currentRow.cloneRow());
+                resultTable.insert(currentRow.cloneRow());
         }
         return new UnmodifiableTable(resultTable);
     }
@@ -442,7 +441,7 @@ import java.util.*;
             return select(where);
 
         Table resultTable = new ConcreteTable(null,
-                (String[]) requestedColumns.clone());
+                requestedColumns.clone());
 
         Results currentRow = (Results) rows();
         Cursor[] envelope = new Cursor[]{currentRow};
@@ -487,9 +486,9 @@ import java.util.*;
         // 이 때 Table의 생성자에 columnNames이 null로 전달되는 경우 오류가 발생하므로
         // 전달받은 모든 테이블의 columnName을 가지고 새로운 requestColumns를 만든다
         if (requestedColumns == null) {
-            Set<String> allColumnSet = new LinkedHashSet<String>();
-            for (int i = 0; i < allTables.length; i++) {
-                Cursor c = allTables[i].rows();
+            Set<String> allColumnSet = new LinkedHashSet<>();
+            for (Table allTable : allTables) {
+                Cursor c = allTable.rows();
                 for (int j = 0; j < c.columnCount(); j++) {
                     allColumnSet.add(c.columnName(j));
                 }
@@ -582,10 +581,10 @@ import java.util.*;
         Object[] resultRow = new Object[requestedColumns.length];
 
         for (int i = 0; i < requestedColumns.length; ++i) {
-            for (int table = 0; table < allTables.length; ++table) {
+            for (Cursor allTable : allTables) {
                 try {
                     resultRow[i] =
-                            allTables[table].column(requestedColumns[i]);
+                            allTable.column(requestedColumns[i]);
                     break;    // if the assignment worked, do the next column
                 } catch (Exception e) {    // otherwise, try the next table
                 }
@@ -622,8 +621,8 @@ import java.util.*;
      * @throws ClassCastException if any elements of the <code>other</code>
      *                            collection do not implement the {@link Table} interface.
      */
-    public Table select(Selector where, Collection requestedColumns,
-                        Collection other) {
+    public Table select(Selector where, Collection<String> requestedColumns,
+                        Collection<Table> other) {
         String[] columnNames = null;
         Table[] otherTables = null;
 
@@ -634,14 +633,12 @@ import java.util.*;
 
             columnNames = new String[requestedColumns.size()];
             int i = 0;
-            Iterator column = requestedColumns.iterator();
 
-            while (column.hasNext())
-                columnNames[i++] = column.next().toString();
+            for (String requestedColumn : requestedColumns) columnNames[i++] = requestedColumn;
         }
 
         if (other != null)
-            otherTables = (Table[]) other.toArray(new Table[other.size()]);
+            otherTables = other.toArray(new Table[other.size()]);
 
         return select(where, columnNames, otherTables);
     }
@@ -661,7 +658,7 @@ import java.util.*;
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    public Table select(Selector where, Collection requestedColumns) {
+    public Table select(Selector where, Collection<String> requestedColumns) {
         return select(where, requestedColumns, null);
     }
 
@@ -693,20 +690,19 @@ import java.util.*;
     public Object clone() throws CloneNotSupportedException {
         ConcreteTable copy = (ConcreteTable) super.clone();
         copy.rowSet = (LinkedList) rowSet.clone();
-        copy.columnNames = (String[]) columnNames.clone();
+        copy.columnNames = columnNames.clone();
         copy.tableName = tableName;
         return copy;
     }
 
     //----------------------------------------------------------------------
     public String toString() {
-        StringBuffer out = new StringBuffer();
+        StringBuilder out = new StringBuilder();
 
         out.append(tableName == null ? "<anonymous>" : tableName);
         out.append("\n");
 
-        for (int i = 0; i < columnNames.length; ++i)
-            out.append(columnNames[i] + "\t");
+        for (String columnName : columnNames) out.append(columnName).append("\t");
         out.append("\n----------------------------------------\n");
 
         for (Cursor i = rows(); i.advance(); ) {
@@ -716,7 +712,7 @@ import java.util.*;
                 if (next == null)
                     out.append("null\t");
                 else
-                    out.append(next.toString() + "\t");
+                    out.append(next.toString()).append("\t");
             }
             out.append('\n');
         }
@@ -788,7 +784,7 @@ import java.util.*;
             address.insert(new Object[]{"1", "123 MyStreet",
                     "Berkeley", "CA", "99999"});
 
-            List l = new ArrayList();
+            List<String> l = new ArrayList<>();
             l.add("2");
             l.add("123 Quarry Ln.");
             l.add("Bedrock ");
@@ -803,7 +799,7 @@ import java.util.*;
             l.add("XX");
             l.add("12345");
 
-            List c = new ArrayList();
+            List<String> c = new ArrayList<>();
             c.add("addrId");
             c.add("street");
             c.add("city");
@@ -870,7 +866,7 @@ import java.util.*;
             // The collection version chains to the string version, so the
             // following call tests both versions
 
-            List columns = new ArrayList();
+            List<String> columns = new ArrayList<>();
             columns.add("first");
             columns.add("last");
 
@@ -925,7 +921,7 @@ import java.util.*;
 
             // Collection version chains to String[] version,
             // so this code tests both:
-            List columns = new ArrayList();
+            List<String> columns = new ArrayList<>();
             columns.add("first");
             columns.add("last");
             columns.add("street");
@@ -933,7 +929,7 @@ import java.util.*;
             columns.add("state");
             columns.add("zip");
 
-            List tables = new ArrayList();
+            List<Table> tables = new ArrayList<>();
             tables.add(address);
 
             Table result =    // WHERE people.addrID = address.addrID
@@ -949,7 +945,7 @@ import java.util.*;
                             );
 
             print(result);
-            System.out.println("");
+            System.out.println();
 
             // Now test a three-way join
             //
@@ -1057,8 +1053,8 @@ import java.util.*;
             Cursor current = t.rows();
             while (current.advance()) {
                 for (Iterator columns = current.columns(); columns.hasNext(); )
-                    System.out.print((String) columns.next() + " ");
-                System.out.println("");
+                    System.out.print(columns.next() + " ");
+                System.out.println();
             }
         }
     }

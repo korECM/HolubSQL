@@ -118,7 +118,7 @@ public interface Cursor {
      * Return a java.util.Iterator across all the columns in
      * the current row.
      */
-    Iterator columns();
+    Iterator<Object> columns();
 
     /**
      * Return true if the iterator is traversing the

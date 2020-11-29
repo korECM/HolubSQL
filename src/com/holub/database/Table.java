@@ -94,7 +94,7 @@ public interface Table extends Serializable, Cloneable {
      * A convenience overload of {@link #insert(String[], Object[])}
      */
 
-    int insert(Collection columnNames, Collection values);
+    int insert(Collection<String> intoTheseColumns, Collection values);
 
     /**
      * In this version of insert, values must have as many elements as there
@@ -266,14 +266,14 @@ public interface Table extends Serializable, Cloneable {
      *                         the current one for the purposes of this SELECT
      *                         operation.
      */
-    Table select(Selector where, Collection requestedColumns,
-                 Collection other);
+    Table select(Selector where, Collection<String> requestedColumns,
+                 Collection<Table> other);
 
     /**
      * Convenience method, translates Collection to String array, then
      * calls String-array version.
      */
-    Table select(Selector where, Collection requestedColumns);
+    Table select(Selector where, Collection<String> requestedColumns);
 
     /**
      * Return an iterator across the rows of the current table.
@@ -304,9 +304,9 @@ public interface Table extends Serializable, Cloneable {
                 String tableName,
                 int width,
                 int height,
-                Iterator columnNames) throws IOException;
+                Iterator<String> columnNames) throws IOException;
 
-        public void storeRow(Iterator data) throws IOException;
+        public void storeRow(Iterator<String> data) throws IOException;
 
         public void endTable() throws IOException;
     }
@@ -331,9 +331,9 @@ public interface Table extends Serializable, Cloneable {
 
         int loadWidth() throws IOException;
 
-        Iterator loadColumnNames() throws IOException;
+        Iterator<String> loadColumnNames() throws IOException;
 
-        Iterator loadRow() throws IOException;
+        Iterator<String> loadRow() throws IOException;
 
         void endTable() throws IOException;
     }
