@@ -488,10 +488,7 @@ import java.util.*;
         if (requestedColumns == null) {
             Set<String> allColumnSet = new LinkedHashSet<>();
             for (Table allTable : allTables) {
-                Cursor c = allTable.rows();
-                for (int j = 0; j < c.columnCount(); j++) {
-                    allColumnSet.add(c.columnName(j));
-                }
+                allColumnSet.addAll(Arrays.asList(allTable.columnNames()));
             }
             requestedColumns = allColumnSet.toArray(new String[0]);
         }
