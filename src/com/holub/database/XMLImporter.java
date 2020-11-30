@@ -97,12 +97,10 @@ public class XMLImporter implements Table.Importer {
     public Iterator<String> loadRow() {
         if (dataNodeListIterator == null || !dataNodeListIterator.hasNext()) return null;
         List<String> row = new ArrayList<>();
-        if (dataNodeListIterator.hasNext()) {
-            NodeList dataList = dataNodeListIterator.next();
-            for (int i = 0; i < dataList.getLength(); i++) {
-                Node dataNode = dataList.item(i);
-                row.add(dataNode.getTextContent());
-            }
+        NodeList dataList = dataNodeListIterator.next();
+        for (int i = 0; i < dataList.getLength(); i++) {
+            Node dataNode = dataList.item(i);
+            row.add(dataNode.getTextContent());
         }
         return row.iterator();
     }
