@@ -152,7 +152,14 @@ public class OrderByQueryTest {
     }
 
     @Test
+    @DisplayName("ORDER BY 절에 column이 존재하지 않으면 ParseFailure를 던진다")
     void orderByWithOutColumnName() {
         Assertions.assertThrows(ParseFailure.class, () -> database.execute("SELECT name, year FROM school ORDER BY"));
+    }
+
+    @Test
+    @DisplayName("ORDER BY 절에 column이 존재하지 않는 이름이면 ParseFailure를 던진다")
+    void orderByColumnNotExist(){
+        Assertions.assertThrows(ParseFailure.class, () -> database.execute("SELECT name, year FROM school ORDER BY names"));
     }
 }

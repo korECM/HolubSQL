@@ -885,7 +885,7 @@ public final class Database {    /* The directory that represents the database.
                     ? null : expr();
 
             // ORDER BY에서 사용하는 column List
-            List<OrderFactory.Order> orderColumns = orderList();
+            List<OrderFactory.Order> orderColumns = orderList(requestedTableNames);
 
             if (orderColumns != null) {
                 builder.order(orderColumns);
@@ -908,7 +908,7 @@ public final class Database {    /* The directory that represents the database.
     // ORDER BY 절을 분석하는 함수
     // 명시된 column과 정렬 방향을 OrderFactory.Order에 담아
     // List로 반환한다
-    private List<OrderFactory.Order> orderList() throws ParseFailure {
+    private List<OrderFactory.Order> orderList(List<String> tableNameList) throws ParseFailure {
         List<OrderFactory.Order> orderColumns = null;
         if (in.matchAdvance(ORDER) != null) {
             in.required(BY);
@@ -921,6 +921,16 @@ public final class Database {    /* The directory that represents the database.
             }
             if (orderColumns.size() == 0)
                 throw in.failure("At least one column must be given after ORDER BY");
+            List<String> allColumnNames = tableNameList.stream()
+                    .map(tables::get)
+                    .map(Table::columnNames)
+                    .map(Arrays::asList)
+                    .reduce(new ArrayList<>(), (a, b) -> {
+                        a.addAll(b);
+                        return a;
+            });
+            if(!orderColumns.stream().map(order -> order.columnName).allMatch(allColumnNames::contains))
+                throw in.failure("Column name in ORDER BY is not exist");
         }
         return orderColumns;
     }
