@@ -928,6 +928,10 @@ public final class Database {    /* The directory that represents the database.
     // 주어진 column의 정렬 방향을 구한다
     // ASC인 경우 true 반환
     private boolean isAsc() throws ParseFailure {
+        if(in.match(ASC)){
+            in.advance();
+            return true;
+        }
         return in.matchAdvance(DESC) == null;
     }
 

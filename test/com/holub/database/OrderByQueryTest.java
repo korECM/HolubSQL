@@ -67,6 +67,8 @@ public class OrderByQueryTest {
     void orderByOneColumn() throws IOException, ParseFailure {
         result = database.execute("SELECT name, year FROM school ORDER BY year");
         Assertions.assertTrue(isSorted(result.rows(), "year", true));
+        result = database.execute("SELECT name, year FROM school ORDER BY year ASC");
+        Assertions.assertTrue(isSorted(result.rows(), "year", true));
 
         result = database.execute("SELECT name, year FROM school ORDER BY year DESC");
         Assertions.assertTrue(isSorted(result.rows(), "year", false));
@@ -82,7 +84,11 @@ public class OrderByQueryTest {
         mapListHelper.addRow("SNU", "3");
 
         result = database.execute("SELECT name, year FROM school ORDER BY year, name");
+        Assertions.assertTrue(mapListHelper.verify(result));
 
+        result = database.execute("SELECT name, year FROM school ORDER BY year ASC, name");
+        Assertions.assertTrue(mapListHelper.verify(result));
+        result = database.execute("SELECT name, year FROM school ORDER BY year ASC, name ASC");
         Assertions.assertTrue(mapListHelper.verify(result));
 
     }
