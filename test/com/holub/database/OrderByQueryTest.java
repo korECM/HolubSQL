@@ -134,7 +134,6 @@ public class OrderByQueryTest {
     @DisplayName("SELECT *와 ORDER BY를 함께 사용할 때도 정렬이 정상적으로 되어야한다")
     void orderWithSelectAsterisk() throws IOException, ParseFailure {
         result = database.execute("SELECT * FROM school ORDER BY year DESC");
-        System.out.println(result.toString());
         Assertions.assertTrue(isSorted(result.rows(), "year", false));
     }
 
