@@ -47,15 +47,11 @@ class OrderHandler implements TableHandler {
     public Table handle(Table target) {
         String[] columns = target.columnNames();
         Table result = TableFactory.create(null, columns);
-        // 정렬을 위해 해당 테이블의 값을 List<Map>으로 변경
-        List<Map<String, String>> rowList = TableHelper.tableToMapList(target.rows(), columns);
 
-        // ORDER BY 에서 주어졌던 정렬 방법으로 List 정렬
-        rowList.sort(OrderFactory.getOrderComparator(orderColumns));
-
-        for (Map<String, String> row : rowList) {
-            result.insert(row.values());
-        }
+        TableHelper.tableToMapList(target.rows(), columns)
+                .stream()
+                .sorted(OrderFactory.getOrderComparator(orderColumns))
+                .forEach(row -> result.insert(row.values()));
         return result;
     }
 }
