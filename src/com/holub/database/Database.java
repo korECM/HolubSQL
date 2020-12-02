@@ -1041,7 +1041,7 @@ public final class Database {    /* The directory that represents the database.
                                     boolean isLeft) throws ParseFailure {
         String primaryTableName = tableNames.get(isLeft ? 0 : 1);
         String secondTableName = tableNames.get(!isLeft ? 0 : 1);
-        Table primary = (Table) tables.get(primaryTableName);
+        Table primary = tables.get(primaryTableName);
 
         Table temporaryTable = ((UnmodifiableTable) doSelect(null, null,
                 tableNames,
