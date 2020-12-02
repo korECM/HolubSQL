@@ -956,16 +956,17 @@ public final class Database {    /* The directory that represents the database.
         boolean isAggregateQuery = false;
         boolean normalColumnExist = false;
         Pattern aggregatePattern = Pattern.compile("(min|max|avg)\\(([a-zA-Z_0-9/\\\\:~]+)\\)");
+        List<String> ejectedColumnList = new ArrayList<>();
 
         for (String column : columns) {
             Matcher m = aggregatePattern.matcher(column.toLowerCase());
             if (m.find()) {
                 // 이미 normal column이 존재하는 경우 오류
-                if (isAggregateQuery == false && normalColumnExist)
+                if (normalColumnExist)
                     throw in.failure("Aggregate Column Should Not Be Used With Normal Column");
 
                 // column 이름만 추출해서 리스트에 추가
-                aggregateColumnList.add(m.group(2));
+                ejectedColumnList.add(m.group(2));
                 isAggregateQuery = true;
             } else if (isAggregateQuery) {
                 // 이미 aggregate column이 존재하는데 normal column이 나온 경우 오류
@@ -974,14 +975,11 @@ public final class Database {    /* The directory that represents the database.
                 normalColumnExist = true;
             }
         }
-        // 만약 aggregate column이 존재한다면 aggregateColumnList와 columns를 swap
-        // 탐색은 column name으로 하고 나중에 Visitor를 통해 집계할 때 aggregate 이름 사용
-        if (aggregateColumnList.size() > 0) {
-            List<String> temp = new ArrayList<>(aggregateColumnList);
-            aggregateColumnList.clear();
+
+        if (ejectedColumnList.size() > 0) {
             aggregateColumnList.addAll(columns);
             columns.clear();
-            columns.addAll(temp);
+            columns.addAll(ejectedColumnList);
         }
         return isAggregateQuery;
     }
