@@ -66,15 +66,11 @@ class DistinctHandler implements TableHandler {
     }
 
     public Table handle(Table target) {
-        String[] columns = target.columnNames();
-        Table result = TableFactory.create(null, columns);
+        Table result = TableFactory.create(null, target.columnNames());
 
-        List<Map<String, String>> tableMap = TableHelper.tableToMapList(target.rows(), (String[]) null);
-        LinkedHashSet<Map<String, String>> uniqueList = new LinkedHashSet<>(tableMap);
-
-        for (Map<String, String> row : uniqueList) {
-            result.insert(row.values());
-        }
+        TableHelper.tableToMapList(target)
+                .stream().distinct()
+                .forEach(row -> result.insert(row.values()));
         return result;
     }
 }
