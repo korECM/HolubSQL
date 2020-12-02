@@ -51,7 +51,7 @@ class OrderHandler implements TableHandler {
         List<Map<String, String>> rowList = TableHelper.tableToMapList(target.rows(), columns);
 
         // ORDER BY 에서 주어졌던 정렬 방법으로 List 정렬
-        Collections.sort(rowList, OrderFactory.getOrderComparator(orderColumns));
+        rowList.sort(OrderFactory.getOrderComparator(orderColumns));
 
         for (Map<String, String> row : rowList) {
             result.insert(row.values());
@@ -77,7 +77,7 @@ class DistinctHandler implements TableHandler {
 
 class AggregateHandler implements TableHandler{
 
-    private List<String> aggregateColumnList;
+    private final List<String> aggregateColumnList;
 
     public AggregateHandler(List<String> aggregateColumnList){
         this.aggregateColumnList = aggregateColumnList;
