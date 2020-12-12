@@ -61,12 +61,25 @@ class StringOrder implements OrderStrategy {
     }
 }
 
+class NullOrder implements OrderStrategy {
+    @Override
+    public boolean canHandle(String column) {
+        return column.equals("null");
+    }
+
+    @Override
+    public int compare(String column1, String column2) {
+        return 1;
+    }
+}
+
 public class OrderFactory {
 
     // 순서를 판단하는 Responsibility를 가진 객체들의 Chain
     private static final List<OrderStrategy> orderStrategyList = new ArrayList<>();
 
     static {
+        orderStrategyList.add(new NullOrder());
         orderStrategyList.add(new BooleanOrder());
         orderStrategyList.add(new NumberOrder());
         orderStrategyList.add(new StringOrder());

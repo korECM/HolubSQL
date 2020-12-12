@@ -88,4 +88,26 @@ class OrderFactoryTest {
         Assertions.assertEquals(getCompare("true", "true"), 0);
         Assertions.assertTrue(getCompare("true", "false") < 0);
     }
+
+    @Test
+    @DisplayName("null column에 대해서 방향이 ASC일 때 정상적인 Compare 결과를 반환해야 한다")
+    void nullAscTest() {
+        order = new OrderFactory.Order(keyName, true);
+        orders.add(order);
+
+        Assertions.assertTrue(getCompare("value", "null") > 0);
+        Assertions.assertEquals(getCompare("null", "null") ,0);
+        Assertions.assertTrue(getCompare("null", "value") < 0);
+    }
+
+    @Test
+    @DisplayName("null column에 대해서 방향이 DESC일 때 정상적인 Compare 결과를 반환해야 한다")
+    void nullDescTest() {
+        order = new OrderFactory.Order(keyName, false);
+        orders.add(order);
+
+        Assertions.assertTrue(getCompare("value", "null") < 0);
+        Assertions.assertEquals(getCompare("null", "null") ,0);
+        Assertions.assertTrue(getCompare("null", "value") > 0);
+    }
 }
