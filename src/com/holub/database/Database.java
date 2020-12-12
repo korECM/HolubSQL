@@ -1006,26 +1006,36 @@ public final class Database {    /* The directory that represents the database.
             while ((id = in.required(IDENTIFIER)) != null) {
                 String direction;
                 if ((direction = in.matchAdvance(LEFT)) != null || (direction = in.matchAdvance(RIGHT)) != null) {
-                    List<String> tableNames = new ArrayList<>();
-
-                    in.required(OUTER);
-                    in.required(JOIN);
-
-                    tableNames.add(id);
-                    id = in.required(IDENTIFIER);
-                    tableNames.add(id);
-
-                    in.required(ON);
-                    Expression where = expr();
-
-                    String tableName = processOuterJoin(tableNames, where, direction.equals("left"));
-                    identifiers.add(tableName);
+                    identifiers.addAll(tableIdForOuterJoin(id, direction));
                 } else {
                     identifiers.add(id);
                 }
                 if (in.matchAdvance(COMMA) == null)
                     break;
             }
+        }
+        return identifiers;
+    }
+
+    private List<String> tableIdForOuterJoin(String id, String direction) throws ParseFailure{
+        List<String> tableNames = new ArrayList<>();
+        List<String> identifiers = new ArrayList<>();
+
+        in.required(OUTER);
+        in.required(JOIN);
+
+        tableNames.add(id);
+        id = in.required(IDENTIFIER);
+        tableNames.add(id);
+
+        in.required(ON);
+        Expression where = expr();
+
+        String tableName = processOuterJoin(tableNames, where, direction.equals("left"));
+
+        identifiers.add(tableName);
+        if ((direction = in.matchAdvance(LEFT)) != null || (direction = in.matchAdvance(RIGHT)) != null) {
+            identifiers.addAll(tableIdForOuterJoin(tableName, direction));
         }
         return identifiers;
     }

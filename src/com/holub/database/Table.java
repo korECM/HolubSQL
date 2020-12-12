@@ -57,6 +57,8 @@ public interface Table extends Serializable, Cloneable {
 
     String[] columnNames();
 
+    boolean isMadeOf(Table t);
+
     /**
      * Rename the table to the indicated name. This method
      * can also be used for naming the anonymous table that's

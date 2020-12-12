@@ -69,6 +69,10 @@ public class UnmodifiableTable implements Table {
         return copy;
     }
 
+    public boolean isMadeOf(Table t){
+        return wrapped.isMadeOf(t);
+    }
+
     public int insert(String[] c, Object[] v) {
         illegal();
         return 0;

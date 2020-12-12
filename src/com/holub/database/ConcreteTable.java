@@ -79,6 +79,10 @@ import java.util.*;
         this.columnNames = columnNames.clone();
     }
 
+    public boolean isMadeOf(Table t){
+        return this == t;
+    }
+
     /**********************************************************************
      * Return the index of the named column. Throw an
      * IndexOutOfBoundsException if the column doesn't exist.
@@ -241,7 +245,7 @@ import java.util.*;
         }
 
         public boolean isTraversing(Table t) {
-            return t == ConcreteTable.this;
+            return isMadeOf(t);
         }
 
         // This method is for use by the outer class only, and is not part
@@ -493,7 +497,7 @@ import java.util.*;
             requestedColumns = allColumnSet.toArray(new String[0]);
         }
 
-        Table resultTable = new ConcreteTable(null, requestedColumns);
+        Table resultTable = new JoinTable(null, requestedColumns, Arrays.asList(allTables));
         Cursor[] envelope = new Cursor[allTables.length];
 
         // Recursively compute the Cartesian product, adding to the
